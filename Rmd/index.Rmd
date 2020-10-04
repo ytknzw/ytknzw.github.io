@@ -43,7 +43,7 @@ knitr::include_graphics(c(
 - [日本の気象観測データの（オープンなようでオープンでない）話](TokyoR/日本の気象観測データの（オープンなようでオープンでない）話_TokyoR_20200627.pdf) (Tokyo.R, 27th June 2020)
 - [国土数値情報APIのススメ](TokyoR/国土数値情報APIのススメ_TokyoR_20200404.pdf) (Tokyo.R, 4th April 2020)
 - [Tidyverse（再）入門](TokyoR/Tidyverse（再）入門_JapanR_2019_20191207.pdf) (Japan.R, 7th December 2019)
-- [ドイツのPyConでR（とPython）の話をしてきた話](ドイツのPyConでR（とPython）の話をしてきた話_TokyoR_82_20191026.pdf) (Tokyo.R, 26th October 2019)
+- [ドイツのPyConでR（とPython）の話をしてきた話](TokyoR/ドイツのPyConでR（とPython）の話をしてきた話_TokyoR_82_20191026.pdf) (Tokyo.R, 26th October 2019)
 
 ### Python
 - データサイエンスのためのリーダブルコードのススメ (PyCon mini Hiroshima, 10th October 2020)
