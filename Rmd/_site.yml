@@ -17,5 +17,5 @@ navbar:
     - icon: fab fa-github
       href: https://github.com/ytknzw
 output:
-  distill::distill_article
+  distill::distill_article:
     css: styles.css
