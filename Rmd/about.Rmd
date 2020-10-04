@@ -1,0 +1,10 @@
+---
+title: "About Me"
+description: |
+  Some additional details about myself
+---
+
+## Yuta Kanzawa
+- Job: Data scientist at Janssen Japan, a pharmaceutical company of Johnson & Johnson
+- Location: Tokyo, Japan
+- Languages: Japanese, English, German, R, Python, SQL, SAS
