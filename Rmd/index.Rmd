@@ -43,15 +43,16 @@ knitr::include_graphics(c(
 - [日本の気象観測データの（オープンなようでオープンでない）話](TokyoR/日本の気象観測データの（オープンなようでオープンでない）話_TokyoR_20200627.pdf) (Tokyo.R, 27th June 2020)
 - [国土数値情報APIのススメ](TokyoR/国土数値情報APIのススメ_TokyoR_20200404.pdf) (Tokyo.R, 4th April 2020)
 - [Tidyverse（再）入門](TokyoR/Tidyverse（再）入門_JapanR_2019_20191207.pdf) (Japan.R, 7th December 2019)
+- [ドイツのPyConでR（とPython）の話をしてきた話](ドイツのPyConでR（とPython）の話をしてきた話_TokyoR_82_20191026.pdf) (Tokyo.R, 26th October 2019)
 
 ### Python
 - データサイエンスのためのリーダブルコードのススメ (PyCon mini Hiroshima, 10th October 2020)
+- [Pythonでggplotってみた話](misc/Pythonでggplotってみた話_Pythonもくもく自習室_20200815.pdf) (Pythonもくもく自習室, 15th August 2020)
 - [Pythonで見る私の行動変容 −COVID-19前後の比較−](PyCon/Python_Charity_Talks_in_Japan/Pythonで見る私の行動変容_−COVID-19前後の比較−_Python_Charity_Talks_in_Japan_20200704.pdf) (Python Charity Talks in Japan, 4th July 2020)
 - [サンキーダイアグラムのススメ](PyData/サンキーダイアグラムのススメ_PyData_Fukuoka_20200607.pdf) (PyData Fukuoka, 7th June 2020)
 - [Friend or Foe: Comparison of R & Python in Data Wrangling & Visualisation](PyConDE2019/Friend_or_Foe_Comparison_of_R_&_Python_in_Data_Wrangling_&_Visualisation_PyConDE_2019Oct.pdf) (PyCon DE & PyData Berlin 2019, 11th October 2019)
 
 ### Misc
-- [Pythonでggplotってみた話](misc/Pythonでggplotってみた話_Pythonもくもく自習室_20200815.pdf) (Pythonもくもく自習室, 15th August 2020)
 - [オペラのお話](misc/オペラのお話_BPLL_20200616_公開用.pdf) (BeProud Learning Lunch, 16th June 2020)
 - [AI Open Education: Stanford Deep Learning Cheat Sheets in Japanese](MLT/AI_Open_Education_Stanford_Deep_Learning_Cheat_Sheets_in_Japanese_MLT_CodeChrysalis_20191030.pdf) (Code Chrysalis x Machine Leearning Tokyo MiniConf, 30th October 2019)
 
