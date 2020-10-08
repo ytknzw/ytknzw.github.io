@@ -5,6 +5,7 @@ description: |
 ---
 
 ## Yuta Kanzawa
-- Job: Data scientist at Janssen Japan, a pharmaceutical company of Johnson & Johnson
+- Job: Data scientist
 - Location: Tokyo, Japan
 - Languages: Japanese, English, German, R, Python, SQL, SAS
+- Bio: Data Scientist at Janssen Pharmaceutical K.K., a family company of Johnson & Johnson in Tokyo. I have more than 8 years of experience and have worked at Janssen for 4 years collaborating successfully with commercial colleagues and senior management to deliver strategic insights and support decision making through data science.
