@@ -6,22 +6,22 @@ site: distill::distill_website
 ---
 
 ## Data Visualisations
-```{r}
+```{r echo = FALSE}
 knitr::include_graphics("images/BF_1951_2020.png")
 ```
-```{r out.width = '50%'}
+```{r echo = FALSE, out.width = '50%'}
 knitr::include_graphics(c(
   "images/sparklinkwine_sankey.png",
   "images/wineries_in_japan_2019.png"
 ))
 ```
-```{r out.width = '50%'}
+```{r echo = FALSE, out.width = '50%'}
 knitr::include_graphics(c(
   "images/around_tokyo.png",
   "images/foodwaste_sankey.png"
 ))
 ```
-```{r out.width = c('30%', '70%')}
+```{r echo = FALSE, out.width = c('30%', '70%')}
 knitr::include_graphics(c(
   "images/eraname_reiwa_filled.png",
   "images/PyHack100thAniv.png"
@@ -40,6 +40,7 @@ knitr::include_graphics(c(
 
 ## Talks
 ### R
+- [カラーユニバーサルデザイン入門](TokyoR/カラーユニバーサルデザイン入門_TokyoR_20210123.pdf) (Tokyo.R, 23rd January 2021)
 - [日本の年平均気温図を作ってみた話](TokyoR/日本の年平均気温図を作ってみた話_JapanR_2020_20201205.pdf) (Japan.R, 5th December 2020)
 - [初心者セッション：データ可視化](TokyoR/初心者セッション_データ可視化_TokyoR_20200801.pdf) (Tokyo.R, 1st August 2020)
 - [日本の気象観測データの（オープンなようでオープンでない）話](TokyoR/日本の気象観測データの（オープンなようでオープンでない）話_TokyoR_20200627.pdf) (Tokyo.R, 27th June 2020)
