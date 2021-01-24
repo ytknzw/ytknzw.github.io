@@ -24,7 +24,7 @@ knitr::include_graphics(c(
 ```{r echo = FALSE, out.width = c('30%', '70%')}
 knitr::include_graphics(c(
   "images/eraname_reiwa_filled.png",
-  "images/PyHack100thAniv.png"
+  "images/pyhack_history.png"
 ))
 ```
 
