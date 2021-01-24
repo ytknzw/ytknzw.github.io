@@ -5,8 +5,8 @@
       "title": "About Me",
       "description": "Some additional details about myself",
       "author": [],
-      "contents": "\nYuta Kanzawa\nJob: Data scientist\nLocation: Tokyo, Japan\nLanguages: Japanese, English, German, R, Python, SQL, SAS\nBio: Data Scientist at Janssen Pharmaceutical K.K., a family company of Johnson & Johnson in Tokyo. I have more than 8 years of experience and have worked at Janssen for 4 years collaborating successfully with commercial colleagues and senior management to deliver strategic insights and support decision making through data science.\n",
-      "last_modified": "2020-11-14T01:32:28+09:00"
+      "contents": "\nYuta Kanzawa\nJob: Data scientist\nLocation: Tokyo, Japan\nLanguages: Japanese, English, German, R, Python, SQL, SAS\nBio: Data Scientist at Janssen Pharmaceutical K.K., a family company of Johnson & Johnson in Tokyo. I have more than 8 years of experience and have worked at Janssen for 4 years collaborating successfully with commercial colleagues and senior management to deliver strategic insights and support decision making through data science.\n\n\n\n",
+      "last_modified": "2021-01-24T12:38:17+09:00"
     },
     {
       "path": "index.html",
@@ -14,7 +14,7 @@
       "description": "Hello! I'm a data scientist based in Tokyo working on applied machine learning, business intelligence and data visualisation. Always under construction.\n",
       "author": [],
       "contents": "\nData Visualisations\n\n\n\n\n\n\n\n\n\n\n\n\nData Analyses\nToilet paper situations in the world (Global Data Science Project for COVID-19, published on 18th May 2020, updated in June 2020)\nWagner2Vek: Die Meistersinger von Nürnberg (July 2019)\nデータで振り返る Python mini-Hack-a-thon 100回の歴史 (June - July 2019)\nOSS\nMatplotlib backend implementation for Optuna visualisation functions (August 2020 - Now)\nJapanese translation of a fast.ai article “Covid-19, your community, and you — a data science perspective” (Published on 16th March 2020, updated on 19th March 2020)\nJapanese translation of Stanford Cheat Sheets for ML, DL, Statistics (with MLT members, August 2019 - Now)\nTalks\nR\nカラーユニバーサルデザイン入門 (Tokyo.R, 23rd January 2021)\n日本の年平均気温図を作ってみた話 (Japan.R, 5th December 2020)\n初心者セッション：データ可視化 (Tokyo.R, 1st August 2020)\n日本の気象観測データの（オープンなようでオープンでない）話 (Tokyo.R, 27th June 2020)\n国土数値情報APIのススメ (Tokyo.R, 4th April 2020)\nTidyverse（再）入門 (Japan.R, 7th December 2019)\nドイツのPyConでR（とPython）の話をしてきた話 (Tokyo.R, 26th October 2019)\nPython\nデータサイエンスのためのリーダブルコードのススメ (PyCon mini Hiroshima, 10th October 2020)\nPythonでggplotってみた話 (Pythonもくもく自習室, 15th August 2020)\nPythonで見る私の行動変容 −COVID-19前後の比較− (Python Charity Talks in Japan, 4th July 2020)\nサンキーダイアグラムのススメ (PyData Fukuoka, 7th June 2020)\nFriend or Foe: Comparison of R & Python in Data Wrangling & Visualisation (PyCon DE & PyData Berlin 2019, 11th October 2019)\nMisc\nオペラのお話 (BeProud Learning Lunch, 16th June 2020)\nAI Open Education: Stanford Deep Learning Cheat Sheets in Japanese (Code Chrysalis x Machine Leearning Tokyo MiniConf, 30th October 2019)\nArchive\nTo be updated.\n\n\n\n",
-      "last_modified": "2021-01-24T12:10:58+09:00"
+      "last_modified": "2021-01-24T12:38:05+09:00"
     }
   ],
   "collections": []

@@ -5,18 +5,18 @@ description: |
 output_dir: "../"
 base_url: https://ytknzw.github.io/
 repository_url: https://github.com/ytknzw/ytknzw.github.io
-twitter:
-  site: "@yutakanzawa"
 navbar:
-  source_url: true
+  source_url: false
   right:
     - text: "Home"
       href: index.html
     - text: "About"
       href: about.html
-    - icon: fab fa-github
+    - text: "GitHub"
+      icon: fa-github
       href: https://github.com/ytknzw
-    - icon: fab fa-twitter
+    - text: "Twitter"
+      icon: fa-twitter
       href: https://twitter.com/yutakanzawa
 output:
   distill::distill_article:
