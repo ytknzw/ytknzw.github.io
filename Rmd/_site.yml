@@ -12,15 +12,14 @@ navbar:
       href: index.html
     - text: "About"
       href: about.html
+    - text: "Links"
+      href: links.html
     - text: "GitHub"
       icon: fa-github
       href: https://github.com/ytknzw
     - text: "Twitter"
       icon: fa-twitter
       href: https://twitter.com/yutakanzawa
-    - text: "note"
-      icon: far fa-sticky-note fa-rotate-180
-      href: https://note.com/yutakanzawa
 output:
   distill::distill_article:
     css: styles.css
