@@ -11,7 +11,7 @@ knitr::include_graphics("images/BF_1951_2020.png")
 ```
 ```{r echo = FALSE, out.width = '50%'}
 knitr::include_graphics(c(
-  "images/sparklinkwine_sankey.png",
+  "images/sparklingwine_sankey.png",
   "images/wineries_in_japan_2019.png"
 ))
 ```
