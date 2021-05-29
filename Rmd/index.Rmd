@@ -40,6 +40,7 @@ knitr::include_graphics(c(
 
 ## Talks
 ### R
+- [初心者セッション：データ可視化<br>Beginner session: data visualisation (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20210529.pdf) (Tokyo.R, 29th May 2021)
 - [カラーユニバーサルデザイン入門](TokyoR/カラーユニバーサルデザイン入門_TokyoR_20210123.pdf) (Tokyo.R, 23rd January 2021)
 - [日本の年平均気温図を作ってみた話](TokyoR/日本の年平均気温図を作ってみた話_JapanR_2020_20201205.pdf) (Japan.R, 5th December 2020)
 - [初心者セッション：データ可視化](TokyoR/初心者セッション_データ可視化_TokyoR_20200801.pdf) (Tokyo.R, 1st August 2020)

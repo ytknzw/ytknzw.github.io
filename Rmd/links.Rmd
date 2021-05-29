@@ -10,3 +10,5 @@ description: |
 <a href="https://note.com/yutakanzawa" class="link-noborder"><span class="far fa-sticky-note fa-rotate-180 font-size-fa color-note"></span></a>
 
 [各国の料理とワインを楽しめるレストランのメモ<br>Memo: Restaurants to Enjoy Food and Wine of Countries](https://note.com/yutakanzawa/n/n89ddf8cae0dc)
+
+[第92回Tokyo.R初心者セッション：データ可視化<br>Beginner session of data visualisation at Tokyo.R #92 (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20210529.pdf)
