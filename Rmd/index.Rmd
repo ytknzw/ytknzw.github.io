@@ -35,8 +35,8 @@ knitr::include_graphics(c(
 
 ## OSS
 - [Matplotlib backend implementation for Optuna visualisation functions](https://github.com/optuna/optuna/pull/1756) (August 2020 - Now)
-- [Japanese translation of a fast.ai article "Covid-19, your community, and you — a data science perspective"](https://www.fast.ai/2020/03/09/coronavirus/) (Published on 16th March 2020, updated on 19th March 2020)
-- [Japanese translation of Stanford Cheat Sheets for ML, DL, Statistics](https://stanford.edu/~shervine/l/ja/teaching/) (with [MLT](https://mltokyo.ai/) members, August 2019 - Now)
+- [Japanese translation](https://qiita.com/yutakanzawa/items/89f313f4f26a3abc398e) of [a fast.ai article "Covid-19, your community, and you — a data science perspective"](https://www.fast.ai/2020/03/09/coronavirus/) (Published on 16th March 2020, updated on 19th March 2020)
+- [Japanese translation of Stanford Cheat Sheets for ML, DL, Statistics](https://stanford.edu/~shervine/l/ja/teaching/) (with [MLT](https://mltokyo.ai/) members, August - October 2019)
 
 ## Talks
 ### R
