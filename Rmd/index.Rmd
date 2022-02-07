@@ -5,9 +5,37 @@ description: |
 site: distill::distill_website
 ---
 
+```{css zoom-lib-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, echo = FALSE}
+ $(document).ready(function() {
+    $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+    // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '55%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '90%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
 ## Data Visualisations
 ```{r echo = FALSE}
-knitr::include_graphics("images/BF_1951_2020.png")
+knitr::include_graphics("images/BF_1951_2021.png")
+```
+```{r echo = FALSE, out.width = '80%'}
+knitr::include_graphics("images/medal_share_olympic_hosts_1992_2021.png")
+```
+```{r echo = FALSE, out.width = '50%'}
+knitr::include_graphics(c(
+  "images/sommelier_gender_parity_in_Japan_2013_2020.png",
+  "images/tokyo_1875_2021_avg.png"
+))
 ```
 ```{r echo = FALSE, out.width = '50%'}
 knitr::include_graphics(c(
@@ -24,7 +52,7 @@ knitr::include_graphics(c(
 ```{r echo = FALSE, out.width = c('30%', '70%')}
 knitr::include_graphics(c(
   "images/eraname_reiwa_filled.png",
-  "images/pyhack_history.png"
+  "images/pyhack_history_130.png"
 ))
 ```
 

@@ -2112,9 +2112,36 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
 
 <div class="d-article">
+<div class="layout-chunk" data-layout="l-body">
+<style type="text/css">
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+</style>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<script type="text/javascript">
+ $(document).ready(function() {
+    $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+    // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '55%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '90%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+</script>
+</div>
 <h2 id="data-visualisations">Data Visualisations</h2>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="images/BF_1951_2020.png" width="1341" /></p>
+<p><img src="images/BF_1951_2021.png" width="6129" /></p>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="images/medal_share_olympic_hosts_1992_2021.png" width="80%" /></p>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="images/sommelier_gender_parity_in_Japan_2013_2020.png" width="50%" /><img src="images/tokyo_1875_2021_avg.png" width="50%" /></p>
 </div>
 <div class="layout-chunk" data-layout="l-body">
 <p><img src="images/sparklingwine_sankey.png" width="50%" /><img src="images/wineries_in_japan_2019.png" width="50%" /></p>
@@ -2123,7 +2150,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <p><img src="images/around_tokyo.png" width="50%" /><img src="images/foodwaste_sankey.png" width="50%" /></p>
 </div>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="images/eraname_reiwa_filled.png" width="30%" /><img src="images/pyhack_history.png" width="70%" /></p>
+<p><img src="images/eraname_reiwa_filled.png" width="30%" /><img src="images/pyhack_history_130.png" width="70%" /></p>
 </div>
 <h2 id="data-analyses">Data Analyses</h2>
 <ul>
