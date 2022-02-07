@@ -40,25 +40,25 @@ knitr::include_graphics(c(
 
 ## Talks
 ### R
-- [初心者セッション：データ可視化<br>Beginner session: data visualisation (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20210529.pdf) (Tokyo.R, 29th May 2021)
-- [カラーユニバーサルデザイン入門](TokyoR/カラーユニバーサルデザイン入門_TokyoR_20210123.pdf) (Tokyo.R, 23rd January 2021)
+- [初心者セッション：データ可視化<br>Beginner session: Data Visualisation (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20210529.pdf) (Tokyo.R, 29th May 2021)
+- [カラーユニバーサルデザイン入門<br>Colour Universal Design 101 (Japanese)](TokyoR/カラーユニバーサルデザイン入門_TokyoR_20210123.pdf) (Tokyo.R, 23rd January 2021)
 - [日本の年平均気温図を作ってみた話](TokyoR/日本の年平均気温図を作ってみた話_JapanR_2020_20201205.pdf) (Japan.R, 5th December 2020)
-- [初心者セッション：データ可視化](TokyoR/初心者セッション_データ可視化_TokyoR_20200801.pdf) (Tokyo.R, 1st August 2020)
+- [初心者セッション：データ可視化<br>Beginner session: Data Visualisation (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20200801.pdf) (Tokyo.R, 1st August 2020)
 - [日本の気象観測データの（オープンなようでオープンでない）話](TokyoR/日本の気象観測データの（オープンなようでオープンでない）話_TokyoR_20200627.pdf) (Tokyo.R, 27th June 2020)
 - [国土数値情報APIのススメ](TokyoR/国土数値情報APIのススメ_TokyoR_20200404.pdf) (Tokyo.R, 4th April 2020)
-- [Tidyverse（再）入門](TokyoR/Tidyverse（再）入門_JapanR_2019_20191207.pdf) (Japan.R, 7th December 2019)
+- [tidyverse（再）入門<br>(Re-)Introduction to tidyverse (Japanese)](TokyoR/Tidyverse（再）入門_JapanR_2019_20191207.pdf) (Japan.R, 7th December 2019)
 - [ドイツのPyConでR（とPython）の話をしてきた話](TokyoR/ドイツのPyConでR（とPython）の話をしてきた話_TokyoR_82_20191026.pdf) (Tokyo.R, 26th October 2019)
 
 ### Python
-- [データサイエンスのためのリーダブルコードのススメ](PyCon/PyCon_mini_Hiroshima/データサイエンスのためのリーダブルコードのススメ_PyCon_mini_Hiroshima_20201010.pdf) (PyCon mini Hiroshima, 10th October 2020)
+- [データサイエンスのためのリーダブルコードのススメ<br>Readable Code for Data Science (Japanese)](PyCon/PyCon_mini_Hiroshima/データサイエンスのためのリーダブルコードのススメ_PyCon_mini_Hiroshima_20201010.pdf) (PyCon mini Hiroshima, 10th October 2020)
 - [Pythonでggplotってみた話](misc/Pythonでggplotってみた話_Pythonもくもく自習室_20200815.pdf) (Pythonもくもく自習室, 15th August 2020)
-- [Pythonで見る私の行動変容 −COVID-19前後の比較−](PyCon/Python_Charity_Talks_in_Japan/Pythonで見る私の行動変容_−COVID-19前後の比較−_Python_Charity_Talks_in_Japan_20200704.pdf) (Python Charity Talks in Japan, 4th July 2020)
+- [Pythonで見る私の行動変容 −COVID-19前後の比較−<br>Evaluate Personal Behavioural Change with Python: Comparison before and after COVID-19 Breakout (Japanese)](PyCon/Python_Charity_Talks_in_Japan/Pythonで見る私の行動変容_−COVID-19前後の比較−_Python_Charity_Talks_in_Japan_20200704.pdf) (Python Charity Talks in Japan, 4th July 2020)
 - [サンキーダイアグラムのススメ](PyData/サンキーダイアグラムのススメ_PyData_Fukuoka_20200607.pdf) (PyData Fukuoka, 7th June 2020)
-- [Friend or Foe: Comparison of R & Python in Data Wrangling & Visualisation](PyConDE2019/Friend_or_Foe_Comparison_of_R_&_Python_in_Data_Wrangling_&_Visualisation_PyConDE_2019Oct.pdf) (PyCon DE & PyData Berlin 2019, 11th October 2019)
+- [Friend or Foe: Comparison of R & Python in Data Wrangling & Visualisation (English)](PyConDE2019/Friend_or_Foe_Comparison_of_R_&_Python_in_Data_Wrangling_&_Visualisation_PyConDE_2019Oct.pdf) (PyCon DE & PyData Berlin 2019, 11th October 2019)
 
 ### Misc
-- [オペラのお話](misc/オペラのお話_BPLL_20200616_公開用.pdf) (BeProud Learning Lunch, 16th June 2020)
-- [AI Open Education: Stanford Deep Learning Cheat Sheets in Japanese](MLT/AI_Open_Education_Stanford_Deep_Learning_Cheat_Sheets_in_Japanese_MLT_CodeChrysalis_20191030.pdf) (Code Chrysalis x Machine Leearning Tokyo MiniConf, 30th October 2019)
+- [オペラのお話<br>An Opera Talk (Japanese)](misc/オペラのお話_BPLL_20200616_公開用.pdf) (BeProud Learning Lunch, 16th June 2020)
+- [AI Open Education: Stanford Deep Learning Cheat Sheets in Japanese (English)](MLT/AI_Open_Education_Stanford_Deep_Learning_Cheat_Sheets_in_Japanese_MLT_CodeChrysalis_20191030.pdf) (Code Chrysalis x Machine Learning Tokyo MiniConf, 30th October 2019)
 
 ### Archive
 To be updated.
