@@ -1,0 +1,835 @@
+
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-1.1.0.min.js" type="text/javascript"></script>
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-1.1.0.min.js" type="text/javascript"></script>
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-tables-1.1.0.min.js" type="text/javascript"></script>
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-gl-1.1.0.min.js" type="text/javascript"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
+<script src="https://code.jquery.com/ui/1.10.4/jquery-ui.min.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.20/require.min.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js" type="text/javascript"></script>
+<script type="text/javascript">function HoloViewsWidget() {
+}
+
+HoloViewsWidget.prototype.init_slider = function(init_val){
+  if(this.load_json) {
+    this.from_json()
+  } else {
+    this.update_cache();
+  }
+}
+
+HoloViewsWidget.prototype.populate_cache = function(idx){
+  this.cache[idx].innerHTML = this.frames[idx];
+  if (this.embed) {
+    delete this.frames[idx];
+  }
+}
+
+HoloViewsWidget.prototype.process_error = function(msg){
+}
+
+HoloViewsWidget.prototype.from_json = function() {
+  var data_url = this.json_path + this.id + '.json';
+  $.getJSON(data_url, $.proxy(function(json_data) {
+    this.frames = json_data;
+    this.update_cache();
+    this.update(0);
+  }, this));
+}
+
+HoloViewsWidget.prototype.dynamic_update = function(current){
+  if (current === undefined) {
+    return
+  }
+  this.current = current;
+  if (this.comm) {
+    var msg = {comm_id: this.id+'_client', content: current}
+    this.comm.send(msg);
+  }
+}
+
+HoloViewsWidget.prototype.update_cache = function(force){
+  var frame_len = Object.keys(this.frames).length;
+  for (var i=0; i<frame_len; i++) {
+    if(!this.load_json || this.dynamic)  {
+      var frame = Object.keys(this.frames)[i];
+    } else {
+      var frame = i;
+    }
+    if(!(frame in this.cache) || force) {
+      if ((frame in this.cache) && force) { this.cache[frame].remove() }
+      var div = document.createElement("div");
+      var parent = document.getElementById("_anim_img"+this.id);
+      div.style.display = "none";
+      parent.appendChild(div)
+      this.cache[frame] = div;
+      var cache_id = "_anim_img"+this.id+"_"+frame;
+      this.populate_cache(frame);
+    }
+  }
+}
+
+HoloViewsWidget.prototype.update = function(current){
+  if(current in this.cache) {
+    for (var index in this.cache) {
+      this.cache[index].style.display = "none";
+    }
+    this.cache[current].style.display = "";
+    this.wait = false;
+  }
+}
+
+HoloViewsWidget.prototype.init_comms = function() {
+  var that = this
+  HoloViews.comm_manager.register_target(this.plot_id, this.id, function (msg) { that.msg_handler(msg) })
+  if (!this.cached || this.dynamic) {
+    function ack_callback(msg) {
+      var msg = msg.metadata;
+      var comm_id = msg.comm_id;
+      var comm_status = HoloViews.comm_status[comm_id];
+      if (that.queue.length > 0) {
+        that.time = Date.now();
+        that.dynamic_update(that.queue[that.queue.length-1]);
+        that.queue = [];
+      } else {
+        that.wait = false;
+      }
+      if ((msg.msg_type == "Ready") && msg.content) {
+        console.log("Python callback returned following output:", msg.content);
+      } else if (msg.msg_type == "Error") {
+        console.log("Python failed with the following traceback:", msg.traceback)
+      }
+    }
+    var comm = HoloViews.comm_manager.get_client_comm(this.plot_id, this.id+'_client', ack_callback);
+    return comm
+  }
+}
+
+HoloViewsWidget.prototype.msg_handler = function(msg) {
+  var metadata = msg.metadata;
+  if ((metadata.msg_type == "Ready")) {
+    if (metadata.content) {
+      console.log("Python callback returned following output:", metadata.content);
+    }
+	return;
+  } else if (metadata.msg_type == "Error") {
+    console.log("Python failed with the following traceback:", metadata.traceback)
+    return
+  }
+  this.process_msg(msg)
+}
+
+HoloViewsWidget.prototype.process_msg = function(msg) {
+}
+
+function SelectionWidget(frames, id, slider_ids, keyMap, dim_vals, notFound, load_json, mode, cached, json_path, dynamic, plot_id){
+  this.frames = frames;
+  this.id = id;
+  this.plot_id = plot_id;
+  this.slider_ids = slider_ids;
+  this.keyMap = keyMap
+  this.current_frame = 0;
+  this.current_vals = dim_vals;
+  this.load_json = load_json;
+  this.mode = mode;
+  this.notFound = notFound;
+  this.cached = cached;
+  this.dynamic = dynamic;
+  this.cache = {};
+  this.json_path = json_path;
+  this.init_slider(this.current_vals[0]);
+  this.queue = [];
+  this.wait = false;
+  if (!this.cached || this.dynamic) {
+    this.comm = this.init_comms();
+  }
+}
+
+SelectionWidget.prototype = new HoloViewsWidget;
+
+
+SelectionWidget.prototype.get_key = function(current_vals) {
+  var key = "(";
+  for (var i=0; i<this.slider_ids.length; i++)
+  {
+    var val = this.current_vals[i];
+    if (!(typeof val === 'string')) {
+      if (val % 1 === 0) { val = val.toFixed(1); }
+      else { val = val.toFixed(10); val = val.slice(0, val.length-1);}
+    }
+    key += "'" + val + "'";
+    if(i != this.slider_ids.length-1) { key += ', ';}
+    else if(this.slider_ids.length == 1) { key += ',';}
+  }
+  key += ")";
+  return this.keyMap[key];
+}
+
+SelectionWidget.prototype.set_frame = function(dim_val, dim_idx){
+  this.current_vals[dim_idx] = dim_val;
+  var key = this.current_vals;
+  if (!this.dynamic) {
+    key = this.get_key(key)
+  }
+  if (this.dynamic || !this.cached) {
+    if ((this.time !== undefined) && ((this.wait) && ((this.time + 10000) > Date.now()))) {
+      this.queue.push(key);
+      return
+    }
+    this.queue = [];
+    this.time = Date.now();
+    this.current_frame = key;
+    this.wait = true;
+    this.dynamic_update(key)
+  } else if (key !== undefined) {
+    this.update(key)
+  }
+}
+
+
+/* Define the ScrubberWidget class */
+function ScrubberWidget(frames, num_frames, id, interval, load_json, mode, cached, json_path, dynamic, plot_id){
+  this.slider_id = "_anim_slider" + id;
+  this.loop_select_id = "_anim_loop_select" + id;
+  this.id = id;
+  this.plot_id = plot_id;
+  this.interval = interval;
+  this.current_frame = 0;
+  this.direction = 0;
+  this.dynamic = dynamic;
+  this.timer = null;
+  this.load_json = load_json;
+  this.mode = mode;
+  this.cached = cached;
+  this.frames = frames;
+  this.cache = {};
+  this.length = num_frames;
+  this.json_path = json_path;
+  document.getElementById(this.slider_id).max = this.length - 1;
+  this.init_slider(0);
+  this.wait = false;
+  this.queue = [];
+  if (!this.cached || this.dynamic) {
+    this.comm = this.init_comms()
+  }
+}
+
+ScrubberWidget.prototype = new HoloViewsWidget;
+
+ScrubberWidget.prototype.set_frame = function(frame){
+  this.current_frame = frame;
+  var widget = document.getElementById(this.slider_id);
+  if (widget === null) {
+    this.pause_animation();
+    return
+  }
+  widget.value = this.current_frame;
+  if (this.dynamic || !this.cached) {
+    if ((this.time !== undefined) && ((this.wait) && ((this.time + 10000) > Date.now()))) {
+      this.queue.push(frame);
+      return
+    }
+    this.queue = [];
+    this.time = Date.now();
+    this.wait = true;
+    this.dynamic_update(frame)
+  } else {
+    this.update(frame)
+  }
+}
+
+ScrubberWidget.prototype.get_loop_state = function(){
+  var button_group = document[this.loop_select_id].state;
+  for (var i = 0; i < button_group.length; i++) {
+    var button = button_group[i];
+    if (button.checked) {
+      return button.value;
+    }
+  }
+  return undefined;
+}
+
+
+ScrubberWidget.prototype.next_frame = function() {
+  this.set_frame(Math.min(this.length - 1, this.current_frame + 1));
+}
+
+ScrubberWidget.prototype.previous_frame = function() {
+  this.set_frame(Math.max(0, this.current_frame - 1));
+}
+
+ScrubberWidget.prototype.first_frame = function() {
+  this.set_frame(0);
+}
+
+ScrubberWidget.prototype.last_frame = function() {
+  this.set_frame(this.length - 1);
+}
+
+ScrubberWidget.prototype.slower = function() {
+  this.interval /= 0.7;
+  if(this.direction > 0){this.play_animation();}
+  else if(this.direction < 0){this.reverse_animation();}
+}
+
+ScrubberWidget.prototype.faster = function() {
+  this.interval *= 0.7;
+  if(this.direction > 0){this.play_animation();}
+  else if(this.direction < 0){this.reverse_animation();}
+}
+
+ScrubberWidget.prototype.anim_step_forward = function() {
+  if(this.current_frame < this.length - 1){
+    this.next_frame();
+  }else{
+    var loop_state = this.get_loop_state();
+    if(loop_state == "loop"){
+      this.first_frame();
+    }else if(loop_state == "reflect"){
+      this.last_frame();
+      this.reverse_animation();
+    }else{
+      this.pause_animation();
+      this.last_frame();
+    }
+  }
+}
+
+ScrubberWidget.prototype.anim_step_reverse = function() {
+  if(this.current_frame > 0){
+    this.previous_frame();
+  } else {
+    var loop_state = this.get_loop_state();
+    if(loop_state == "loop"){
+      this.last_frame();
+    }else if(loop_state == "reflect"){
+      this.first_frame();
+      this.play_animation();
+    }else{
+      this.pause_animation();
+      this.first_frame();
+    }
+  }
+}
+
+ScrubberWidget.prototype.pause_animation = function() {
+  this.direction = 0;
+  if (this.timer){
+    clearInterval(this.timer);
+    this.timer = null;
+  }
+}
+
+ScrubberWidget.prototype.play_animation = function() {
+  this.pause_animation();
+  this.direction = 1;
+  var t = this;
+  if (!this.timer) this.timer = setInterval(function(){t.anim_step_forward();}, this.interval);
+}
+
+ScrubberWidget.prototype.reverse_animation = function() {
+  this.pause_animation();
+  this.direction = -1;
+  var t = this;
+  if (!this.timer) this.timer = setInterval(function(){t.anim_step_reverse();}, this.interval);
+}
+
+function extend(destination, source) {
+  for (var k in source) {
+    if (source.hasOwnProperty(k)) {
+      destination[k] = source[k];
+    }
+  }
+  return destination;
+}
+
+function update_widget(widget, values) {
+  if (widget.hasClass("ui-slider")) {
+    widget.slider('option', {
+      min: 0,
+      max: values.length-1,
+      dim_vals: values,
+      value: 0,
+      dim_labels: values
+    })
+    widget.slider('option', 'slide').call(widget, event, {value: 0})
+  } else {
+    widget.empty();
+    for (var i=0; i<values.length; i++){
+      widget.append($("<option>", {
+        value: i,
+        text: values[i]
+      }))
+    };
+    widget.data('values', values);
+    widget.data('value', 0);
+    widget.trigger("change");
+  };
+}
+
+function init_slider(id, plot_id, dim, values, next_vals, labels, dynamic, step, value, next_dim,
+                     dim_idx, delay, jQueryUI_CDN, UNDERSCORE_CDN) {
+  // Slider JS Block START
+  function loadcssfile(filename){
+    var fileref=document.createElement("link")
+    fileref.setAttribute("rel", "stylesheet")
+    fileref.setAttribute("type", "text/css")
+    fileref.setAttribute("href", filename)
+    document.getElementsByTagName("head")[0].appendChild(fileref)
+  }
+  loadcssfile("https://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css");
+  /* Check if jQuery and jQueryUI have been loaded
+     otherwise load with require.js */
+  var jQuery = window.jQuery,
+    // check for old versions of jQuery
+    oldjQuery = jQuery && !!jQuery.fn.jquery.match(/^1\.[0-4](\.|$)/),
+    jquery_path = '',
+    paths = {},
+    noConflict;
+  var jQueryUI = jQuery.ui;
+  // check for jQuery
+  if (!jQuery || oldjQuery) {
+    // load if it's not available or doesn't meet min standards
+    paths.jQuery = jQuery;
+    noConflict = !!oldjQuery;
+  } else {
+    // register the current jQuery
+    define('jquery', [], function() { return jQuery; });
+  }
+  if (!jQueryUI) {
+    paths.jQueryUI = jQueryUI_CDN.slice(null, -3);
+  } else {
+    define('jQueryUI', [], function() { return jQuery.ui; });
+  }
+  paths.underscore = UNDERSCORE_CDN.slice(null, -3);
+  var jquery_require = {
+    paths: paths,
+    shim: {
+      "jQueryUI": {
+        exports:"$",
+        deps: ['jquery']
+      },
+      "underscore": {
+        exports: '_'
+      }
+    }
+  }
+  require.config(jquery_require);
+  require(["jQueryUI", "underscore"], function(jUI, _){
+    if (noConflict) $.noConflict(true);
+    var vals = values;
+    if (dynamic && vals.constructor === Array) {
+      var default_value = parseFloat(value);
+      var min = parseFloat(vals[0]);
+      var max = parseFloat(vals[vals.length-1]);
+      var wstep = step;
+      var wlabels = [default_value];
+      var init_label = default_value;
+    } else {
+      var min = 0;
+      if (dynamic) {
+        var max = Object.keys(vals).length - 1;
+        var init_label = labels[value];
+        var default_value = values[value];
+      } else {
+        var max = vals.length - 1;
+        var init_label = labels[value];
+        var default_value = value;
+      }
+      var wstep = 1;
+      var wlabels = labels;
+    }
+    function adjustFontSize(text) {
+      var width_ratio = (text.parent().width()/8)/text.val().length;
+      var size = Math.min(0.9, Math.max(0.6, width_ratio))+'em';
+      text.css('font-size', size);
+    }
+    var slider = $('#_anim_widget'+id+'_'+dim);
+    slider.slider({
+      animate: "fast",
+      min: min,
+      max: max,
+      step: wstep,
+      value: default_value,
+      dim_vals: vals,
+      dim_labels: wlabels,
+      next_vals: next_vals,
+      slide: function(event, ui) {
+        var vals = slider.slider("option", "dim_vals");
+        var next_vals = slider.slider("option", "next_vals");
+        var dlabels = slider.slider("option", "dim_labels");
+        if (dynamic) {
+          var dim_val = ui.value;
+          if (vals.constructor === Array) {
+            var label = ui.value;
+          } else {
+            var label = dlabels[ui.value];
+          }
+        } else {
+          var dim_val = vals[ui.value];
+          var label = dlabels[ui.value];
+        }
+        var text = $('#textInput'+id+'_'+dim);
+        text.val(label);
+        adjustFontSize(text);
+        HoloViews.index[plot_id].set_frame(dim_val, dim_idx);
+        if (Object.keys(next_vals).length > 0) {
+          var new_vals = next_vals[dim_val];
+          var next_widget = $('#_anim_widget'+id+'_'+next_dim);
+          update_widget(next_widget, new_vals);
+        }
+      }
+    });
+    slider.keypress(function(event) {
+      if (event.which == 80 || event.which == 112) {
+        var start = slider.slider("option", "value");
+        var stop =  slider.slider("option", "max");
+        for (var i=start; i<=stop; i++) {
+          var delay = i*delay;
+          $.proxy(function doSetTimeout(i) { setTimeout($.proxy(function() {
+            var val = {value:i};
+            slider.slider('value',i);
+            slider.slider("option", "slide")(null, val);
+          }, slider), delay);}, slider)(i);
+        }
+      }
+      if (event.which == 82 || event.which == 114) {
+        var start = slider.slider("option", "value");
+        var stop =  slider.slider("option", "min");
+        var count = 0;
+        for (var i=start; i>=stop; i--) {
+          var delay = count*delay;
+          count = count + 1;
+          $.proxy(function doSetTimeout(i) { setTimeout($.proxy(function() {
+            var val = {value:i};
+            slider.slider('value',i);
+            slider.slider("option", "slide")(null, val);
+          }, slider), delay);}, slider)(i);
+        }
+      }
+    });
+    var textInput = $('#textInput'+id+'_'+dim)
+    textInput.val(init_label);
+    adjustFontSize(textInput);
+  });
+}
+
+function init_dropdown(id, plot_id, dim, vals, value, next_vals, labels, next_dim, dim_idx, dynamic) {
+  var widget = $("#_anim_widget"+id+'_'+dim);
+  widget.data('values', vals)
+  for (var i=0; i<vals.length; i++){
+    if (dynamic) {
+      var val = vals[i];
+    } else {
+      var val = i;
+    }
+    widget.append($("<option>", {
+      value: val,
+      text: labels[i]
+    }));
+  };
+  widget.data("next_vals", next_vals);
+  widget.val(value);
+  widget.on('change', function(event, ui) {
+    if (dynamic) {
+      var dim_val = parseInt(this.value);
+    } else {
+      var dim_val = $.data(this, 'values')[this.value];
+    }
+    var next_vals = $.data(this, "next_vals");
+    if (Object.keys(next_vals).length > 0) {
+      var new_vals = next_vals[dim_val];
+      var next_widget = $('#_anim_widget'+id+'_'+next_dim);
+      update_widget(next_widget, new_vals);
+    }
+    var widgets = HoloViews.index[plot_id]
+    if (widgets) {
+      widgets.set_frame(dim_val, dim_idx);
+    }
+  });
+}
+
+
+if (window.HoloViews === undefined) {
+  window.HoloViews = {}
+  window.PyViz = window.HoloViews
+} else if (window.PyViz === undefined) {
+  window.PyViz = window.HoloViews
+}
+
+
+var _namespace = {
+  init_slider: init_slider,
+  init_dropdown: init_dropdown,
+  comms: {},
+  comm_status: {},
+  index: {},
+  plot_index: {},
+  kernels: {},
+  receivers: {}
+}
+
+for (var k in _namespace) {
+  if (!(k in window.HoloViews)) {
+    window.HoloViews[k] = _namespace[k];
+  }
+}
+
+// Define Bokeh specific subclasses
+function BokehSelectionWidget() {
+  SelectionWidget.apply(this, arguments);
+}
+
+function BokehScrubberWidget() {
+  ScrubberWidget.apply(this, arguments);
+}
+
+// Let them inherit from the baseclasses
+BokehSelectionWidget.prototype = Object.create(SelectionWidget.prototype);
+BokehScrubberWidget.prototype = Object.create(ScrubberWidget.prototype);
+
+// Define methods to override on widgets
+var BokehMethods = {
+  update_cache : function(){
+    for (var index in this.frames) {
+      this.frames[index] = JSON.parse(this.frames[index]);
+    }
+  },
+  update : function(current){
+    if (current === undefined) {
+      return;
+    }
+    var data = this.frames[current];
+    if (data !== undefined) {
+      if (data.root in HoloViews.plot_index) {
+        var doc = HoloViews.plot_index[data.root].model.document;
+      } else {
+        var doc = Bokeh.index[data.root].model.document;
+      }
+      doc.apply_json_patch(data.content);
+    }
+  },
+  init_comms: function() {
+    if (Bokeh.protocol !== undefined) {
+      this.receiver = new Bokeh.protocol.Receiver()
+    } else {
+      this.receiver = null;
+    }
+    return HoloViewsWidget.prototype.init_comms.call(this);
+  },
+  process_msg : function(msg) {
+    if (this.plot_id in HoloViews.plot_index) {
+      var doc = HoloViews.plot_index[this.plot_id].model.document;
+    } else {
+      var doc = Bokeh.index[this.plot_id].model.document;
+    }
+    if (this.receiver === null) { return }
+    var receiver = this.receiver;
+    if (msg.buffers.length > 0) {
+      receiver.consume(msg.buffers[0].buffer)
+    } else {
+      receiver.consume(msg.content.data)
+    }
+    const comm_msg = receiver.message;
+    if ((comm_msg != null) && (doc != null)) {
+      doc.apply_json_patch(comm_msg.content, comm_msg.buffers)
+    }
+  }
+}
+
+// Extend Bokeh widgets with backend specific methods
+extend(BokehSelectionWidget.prototype, BokehMethods);
+extend(BokehScrubberWidget.prototype, BokehMethods);
+
+window.HoloViews.BokehSelectionWidget = BokehSelectionWidget
+window.HoloViews.BokehScrubberWidget = BokehScrubberWidget
+</script>
+<script type="text/javascript">
+    function JupyterCommManager() {
+    }
+
+    JupyterCommManager.prototype.register_target = function(plot_id, comm_id, msg_handler) {
+      if (window.comm_manager || ((window.Jupyter !== undefined) && (Jupyter.notebook.kernel != null))) {
+        var comm_manager = window.comm_manager || Jupyter.notebook.kernel.comm_manager;
+        comm_manager.register_target(comm_id, function(comm) {
+          comm.on_msg(msg_handler);
+        });
+      } else if ((plot_id in window.PyViz.kernels) && (window.PyViz.kernels[plot_id])) {
+        window.PyViz.kernels[plot_id].registerCommTarget(comm_id, function(comm) {
+          comm.onMsg = msg_handler;
+        });
+      }
+    }
+
+    JupyterCommManager.prototype.get_client_comm = function(plot_id, comm_id, msg_handler) {
+      if (comm_id in window.PyViz.comms) {
+        return window.PyViz.comms[comm_id];
+      } else if (window.comm_manager || ((window.Jupyter !== undefined) && (Jupyter.notebook.kernel != null))) {
+        var comm_manager = window.comm_manager || Jupyter.notebook.kernel.comm_manager;
+        var comm = comm_manager.new_comm(comm_id, {}, {}, {}, comm_id);
+        if (msg_handler) {
+          comm.on_msg(msg_handler);
+        }
+      } else if ((plot_id in window.PyViz.kernels) && (window.PyViz.kernels[plot_id])) {
+        var comm = window.PyViz.kernels[plot_id].connectToComm(comm_id);
+        comm.open();
+        if (msg_handler) {
+          comm.onMsg = msg_handler;
+        }
+      }
+
+      window.PyViz.comms[comm_id] = comm;
+      return comm;
+    }
+
+    window.PyViz.comm_manager = new JupyterCommManager();
+    </script>
+
+<link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-1.1.0.min.css">
+<link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-1.1.0.min.css">
+<link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-tables-1.1.0.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+<style>div.bk-hbox {
+    display: flex;
+    justify-content: center;
+}
+
+div.bk-hbox div.bk-plot {
+    padding: 8px;
+}
+
+div.bk-hbox div.bk-data-table {
+    padding: 20px;
+}
+
+div.hololayout {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+div.holoframe {
+  width: 75%;
+}
+
+div.holowell {
+  display: flex;
+  align-items: center;
+}
+
+form.holoform {
+  background-color: #fafafa;
+  border-radius: 5px;
+  overflow: hidden;
+  padding-left: 0.8em;
+  padding-right: 0.8em;
+  padding-top: 0.4em;
+  padding-bottom: 0.4em;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  border: 1px solid #e3e3e3;
+}
+
+div.holowidgets {
+  padding-right: 0;
+  width: 25%;
+}
+
+div.holoslider {
+  min-height: 0 !important;
+  height: 0.8em;
+  width: 100%;
+}
+
+div.holoformgroup {
+  padding-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+div.hologroup {
+  padding-left: 0;
+  padding-right: 0.8em;
+  width: 100%;
+}
+
+.holoselect {
+  width: 92%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.holotext {
+  padding-left:  0.5em;
+  padding-right: 0;
+  width: 100%;
+}
+
+.holowidgets .ui-resizable-se {
+  visibility: hidden
+}
+
+.holoframe > .ui-resizable-se {
+  visibility: hidden
+}
+
+.holowidgets .ui-resizable-s {
+  visibility: hidden
+}
+
+
+/* CSS rules for noUISlider based slider used by JupyterLab extension  */
+
+.noUi-handle {
+  width: 20px !important;
+  height: 20px !important;
+  left: -5px !important;
+  top: -5px !important;
+}
+
+.noUi-handle:before, .noUi-handle:after {
+  visibility: hidden;
+  height: 0px;
+}
+
+.noUi-target {
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+</style><div style='display: table; margin: 0 auto;'>
+
+
+
+
+
+
+  <div class="bk-root" id="7892a825-412e-46f5-b697-52c5db7d7c4d" data-root-id="1659"></div>
+
+<script type="text/javascript">
+  (function(root) {
+  function embed_document(root) {
+    
+  var docs_json = {"451fbbb9-7025-4d9e-b583-cf6b807c1ca1":{"roots":{"references":[{"attributes":{"below":[{"id":"1668","type":"LinearAxis"}],"center":[{"id":"1672","type":"Grid"},{"id":"1677","type":"Grid"}],"left":[{"id":"1673","type":"LinearAxis"}],"margin":null,"min_border_bottom":10,"min_border_left":10,"min_border_right":10,"min_border_top":10,"outline_line_alpha":{"value":0},"plot_width":800,"renderers":[{"id":"1712","type":"GraphRenderer"},{"id":"1736","type":"GlyphRenderer"},{"id":"1742","type":"GlyphRenderer"},{"id":"1833","type":"GlyphRenderer"}],"sizing_mode":"fixed","title":{"id":"1660","type":"Title"},"toolbar":{"id":"1683","type":"Toolbar"},"x_range":{"id":"1656","type":"Range1d"},"x_scale":{"id":"1664","type":"LinearScale"},"y_range":{"id":"1657","type":"Range1d"},"y_scale":{"id":"1666","type":"LinearScale"}},"id":"1659","subtype":"Figure","type":"Plot"},{"attributes":{"callback":null,"data":{"edge_color":["\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)"],"end":{"__ndarray__":"BQAAAAYAAAAFAAAABgAAAAUAAAAGAAAABQAAAAYAAAAFAAAABgAAAA==","dtype":"int32","shape":[10]},"from":["\u4e00\u822c\u5bb6\u5ead\nHouseholds","\u4e00\u822c\u5bb6\u5ead\nHouseholds","\u5916\u98df\u7523\u696d\nRestaurant","\u5916\u98df\u7523\u696d\nRestaurant","\u98df\u54c1\u88fd\u9020\u696d\nManufacturer","\u98df\u54c1\u88fd\u9020\u696d\nManufacturer","\u98df\u54c1\u5378\u58f2\u696d\nWholesaler","\u98df\u54c1\u5378\u58f2\u696d\nWholesaler","\u98df\u54c1\u5c0f\u58f2\u696d\nRetailer","\u98df\u54c1\u5c0f\u58f2\u696d\nRetailer"],"start":{"__ndarray__":"AAAAAAAAAAABAAAAAQAAAAIAAAACAAAAAwAAAAMAAAAEAAAABAAAAA==","dtype":"int32","shape":[10]},"to":["\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)"],"value":[5430,2890,670,1330,15130,1400,110,180,610,670],"xs":[{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"AAAAAAAALkAAAAAAAAAuQAAAAAAAAC5AaNk40k0MRkAkPIj/5gFSQBQID8RqtlhAQ2p8t9wmX0A6/k2tM6tiQDOsHJcapGVA8QuQWbh/aEBQ6g01oj9rQDQU/Glt5W1APCtgnFc5cEAEP+BwfnRxQN0rsdL1pHJAOdgFYojLc0CLKhG/AOl0QEAJBoop/nVAyFoXY80Ld0CXBXjqthJ4QBnwWsCwE3lAwgDzhIUPekD/HXPY/wZ7QEYuDlvq+ntAARj3rA/sfEClwWBuOtt9QKARfj81yX5AYu6BwMq2f0Atn8/IYlKAQP9zhCn4yYBA3eh40opCgUAAccYTgLyBQJ5/hj09OIJA84fSnye2gkA0/cOKpDaDQJxSdE4ZuoNAYPv8OutAhEC6anegf8uEQOIT/c47WoVAEGqnFoXthUB+4I/HwIWGQGDqzzFUI4dA8vqApaTGh0BshbxyF3CIQAT9m+kRIIlA89Q4WvnWiUBwgKwUM5WKQLdyEGkkW4tA/R5+pzIpjEB7+A4gw/+MQGly3CI7341AAAAAAADIjkAAAAAAAMiOQAAAAAAAyI5AAAAAAADIjkBqctwiO9+NQHv4DiDD/4xA/h5+pzIpjEC4chBpJFuLQHKArBQzlYpA89Q4WvnWiUAF/ZvpESCJQG2FvHIXcIhA9PqApaTGh0Bh6s8xVCOHQH7gj8fAhYZAEGqnFoXthUDiE/3OO1qFQLtqd6B/y4RAYfv8OutAhECdUnROGbqDQDX9w4qkNoNA84fSnye2gkCff4Y9PTiCQP9wxhOAvIFA3eh40opCgUAAdIQp+MmAQC6fz8hiUoBAY+6BwMq2f0CfEX4/Ncl+QKXBYG46231AAxj3rA/sfEBGLg5b6vp7QAEec9j/BntAxADzhIUPekAb8FrAsBN5QJcFeOq2EnhAyVoXY80Ld0A/CQaKKf51QI0qEb8A6XRAPNgFYojLc0DfK7HS9aRyQAU/4HB+dHFAQCtgnFc5cEA3FPxpbeVtQFPqDTWiP2tA8guQWbh/aEA1rByXGqRlQD/+Ta0zq2JATGp8t9wmX0AaCA/EarZYQCk8iP/mAVJAbNk40k0MRkAAAAAAAAAuQA==","dtype":"float64","shape":[104]}],"ys":[{"__ndarray__":"8TFXjAnXdkDgh8b60FhxQOCHxvrQWHFAavznG71YcUDc/vOXglhxQHQG5hMjWHFAa4q5NKBXcUADAmqf+1ZxQHTk8vg2VnFAAqlP5lNVcUDhxnsMVFRxQFS1chA5U3FAlesvlwRScUDk4K5FuFBxQHsM68BVT3FAmeXfrd5NcUB644ixVExxQF194XC5SnFAeyrlkA5JcUATYo+2VUdxQGGb24aQRXFApE3FpsBDcUAX8Ee750FxQPn5XmkHQHFAheIFViE+cUD5IDgmNzxxQJEs8X5KOnFAi3wsBV04cUAjiOVdcDZxQJbGFy6GNHFAI6++GqAycUAFudXIvzBxQHhbWN3mLnFAuw1C/RYtcUAKR47NUStxQKJ+OPOYKXFAwCs8E+4ncUCixZTSUiZxQILDPdbIJHFAoJwyw1EjcUA4yG4+7yFxQIa97eyiIHFAyfOqc24fcUA84qF3Ux5xQBwAzp1THXFApsQqi3AccUAZp7PkqxtxQLEeZE8HG3FAqaI3cIQacUBAqinsJBpxQLKsNWjqGXFAPCFXidYZcUA8IVeJ1hlxQE3L5xoPmHZATcvnGg+YdkDDVsb5Iph2QFBUun1dmHZAu0zIAb2YdkDCyPTgP5l2QCtRRHbkmXZAuG67HKmadkAuql4vjJt2QE2MMgmMnHZA2507BaeddkCXZ35+2552QEhy/88noHZAsEbDVIqhdkCTbc5nAaN2QLFvJWSLpHZA0dXMpCamdkCzKMmE0ad2QBvxHl+KqXZAzLfSjk+rdkCJBeluH612QBVjZlr4rnZAM1lPrNiwdkCncKi/vrJ2QDQydu+otHZAnCa9lpW2dkCi1oEQg7h2QArLyLdvunZAloyW51m8dkAKpO/6P752QCia2EwgwHZAtfdVOPnBdkByRWwYycN2QCMMIEiOxXZAi9R1IkfHdkBsJ3IC8sh2QIyNGUONynZAq49wPxfMdkCOtntSjs12QPWKP9fwznZAppXAKD3QdkBkXwOicdF2QPJwDJ6M0nZAElPgd4zTdkCGjoOKb9R2QBOs+jA01XZAfDRKxtjVdkCEsHalW9Z2QO2ohCm71nZAe6Z4rfXWdkDxMVeMCdd2QA==","dtype":"float64","shape":[104]},{"__ndarray__":"q4COzXfDeUDxMVeMCdd2QPExV4wJ13ZAqQVGIQzYdkBd5NObBdt2QGPjopXg33ZABxhVqIfmdkCel4xt5e52QHd3637k+HZA7MwTdm8Ed0BCrafscBF3QNQtSXzTH3dA82OavoEvd0DsZD1NZkB3QBdG1MFrUndAwRwBtnxld0BA/mXDg3l3QOT/pINrjndA/jZgkB6kd0DguDmDh7p3QNua0/WQ0XdAQ/LPgSXpd0Bo1NDALwF4QJ9WeEyaGXhAN45ovk8yeECBkEOwOkt4QNFyq7tFZHhAeEpCelt9eEDHLKqFZpZ4QBMvhXdRr3hAqmZ16QbIeEDg6Bx1ceB4QAXLHbR7+HhAbiIaQBAQeUBoBLSyGSd5QEyGjaWCPXlAZb1IsjVTeUAIv4dyHWh5QIag7H8kfHlAMncZdDWPeUBcWLDoOqF5QFdZU3cfsnlAdY+kuc3BeUAIEEZJMNB5QGDw2b8x3XlA0UUCt7zoeUCrJWHIu/J5QEKlmI0Z+3lA5tlKoMABekDq2BmamwZ6QKC3pxSVCXpAWIuWqZcKekBYi5aplwp6QBLazeoF93xAEtrN6gX3fEBZBt9VA/Z8QKMnUdsJ83xAoSiC4S7ufED888/Oh+d8QGV0mAkq33xAipQ5+CrVfEAcPxEBoMl8QMJefYqevHxAL97b+juufEAQqIq4jZ58QBan5ympjXxA6sVQtaN7fEBB7yPBkmh8QMINv7OLVHxAIAyA86M/fEAG1cTm8Cl8QCVT6/OHE3xAKHFRgX78e0DAGVX16eR7QJg3VLbfzHtAYrWsKnW0e0DNfby4v5t7QIJ74cbUgntAM5l5u8lpe0CLweL8s1B7QDrfevGoN3tA8dyf/70ee0Bapa+NCAZ7QCQjCAKe7XpA/kAHw5PVekCW6Qo3/716QJgHccT1pnpAt4WX0YyQekCeTtzE2Xp6QPtMnQTyZXpAfWs49+pRekDSlAsD2j56QKizdI7ULHpArLLR/+8bekCOfIC9QQx6QPz73i3f/XlApBtLt93weUAyxiLAUuV5QFjmw65T23lAwGaM6fXSeUAdMtrWTsx5QBgzC91zx3lAZFR9YnrEeUCrgI7Nd8N5QA==","dtype":"float64","shape":[104]},{"__ndarray__":"8V715nb8fEBeCfzt8058QF4J/O3zTnxAd2c3NVhNfEBafiDCm0h8QOLIiafgQHxA6MFF+Eg2fEBM5CbH9ih8QOaq/yYMGXxAnZCiKqsGfEA+EOLk9fF7QK+kkGgO23tAx8iAyBbCe0Bp94QXMad7QGurb2h/intArV8TziNse0ALj0JbQEx7QGC0zyL3KntAh0qNN2oIe0BfzE2su+R6QMK045MNwHpAjn4hAYKaekCdpNkGO3R6QM+h3rdaTXpA/vACJwMmekAFDRlnVv55QMNw84p21nlAEpdkpYWueUDP+j7JpYZ5QNgWVQn5XnlABmZ5eKE3eUA2Y34pwRB5QEaJNi966nhAFFN0nO7EeEB3OwqEQKB4QE69yviRfHhAdlOIDQVaeEDKeBXVuzh4QCioRGLYGHhAalzox3z6d0BsENMYy913QA4/12flwndAKGPHx+2pd0CY93VLBpN3QDx3tQVRfndA7VxYCfBrd0CJIzFpBVx3QO1FEjizTndA9D7OiBtEd0B6iTduYDx3QF2gIPujN3dAd/5bQgg2d0B3/ltCCDZ3QApUVTuL43dAClRVO4vjd0Dv9Rn0JuV3QAzfMGfj6XdAh5THgZ7xd0B/mwsxNvx3QB15KmKICXhAgLJRAnMZeEDQzK7+0yt4QCtNb0SJQHhAvLjAwHBXeECflNBgaHB4QP5lzBFOi3hA+7HhwP+neEC6/T1bW8Z4QF3ODs4+5nhACamBBogHeUDiEsTxFCp5QAuRA33DTXlApahtlXFyeUDb3i8o/Zd5QMi4dyJEvnlAl7tycSTleUBqbE4CfAx6QGFQOMIoNHpApOxdnghcekBWxuyD+YN6QJhiEmDZq3pAkUb8H4bTekBk99ew3fp6QDL60v+9IXtAINQa+gRIe0BWCt2MkG17QPAhR6U+kntAGqCGMO21e0DyCckbeth7QJ7kO1TD+XtAQLUMx6YZfED/AGlhAjh8QPxMfhC0VHxAWh56wZlvfEBA+olhkYh8QNBl2914n3xALOabIy60fEB6APkfj8Z8QN45IMB51nxAfBc/8cvjfEB0HoOgY+58QO7TGbse9nxAC70wLtv6fEDxXvXmdvx8QA==","dtype":"float64","shape":[104]},{"__ndarray__":"BS+n4OVUfkDxXvXmdvx8QPFe9eZ2/HxASUlL7qv8fEC1HlEXSP18QMgAjf5G/nxAEhGFQKT/fEAmcb95WwF9QJVCwkZoA31A96YTRMYFfUDVvzkOcQh9QMiuukFkC31AXpUce5sOfUAuleVWEhJ9QMfPm3HEFX1AvGbFZ60ZfUChe+jVyB19QAYwi1gSIn1Ae6UzjIUmfUCY/WcNHit9QOpZrnjXL31AB9yMaq00fUB+pYl/mzl9QOTXKlSdPn1Ay5T2hK5DfUDD/XKuykh9QGE0Jm3tTX1ANVqWXRJTfUDSkEkcNVh9QMz5xUVRXX1AsraRdmJifUAX6TJLZGd9QI6yL2BSbH1ArDQOUihxfUD+kFS94XV9QBrpiD56en1AkF4xcu1+fUD1EtT0NoN9QNgn92JSh31Azr4gWTuLfUBn+dZz7Y59QDf5n09kkn1Azt8BiZuVfUDCzoK8jph9QKHnqIY5m31AAEz6g5edfUBwHf1QpJ99QIR9N4pboX1Azo0vzLiifUDgb2uzt6N9QExFcdxTpH1ApS/H44ikfUClL8fjiKR9QLn/eN33/H5Auf943ff8fkBfFSPWwvx+QPQ/Ha0m/H5A413hxSf7fkCZTemDyvl+QITtrkoT+H5AFBysfQb2fkC4t1qAqPN+QNeeNLb98H5A5K+zggrufkBJyVFJ0+p+QHrJiG1c535A347SUqrjfkDr96hcwd9+QAnjhe6l235Api7ja1zXfkAvuTo46dJ+QBRhBrdQzn5AvwTAS5fJfkCiguFZwcR+QCq55ETTv35AxIZDcNG6fkDfyXc/wLV+QOZg+xWksH5ASSpIV4GrfkB1BNhmXKZ+QNjNJKg5oX5A32Sofh2cfkD5p9xNDJd+QJJ1O3kKkn5AGqw+ZByNfkD/KWByRoh+QKzNGQeNg35AkHXlhfR+fkAZAD1SgXp+QLZLms83dn5A0TZ3YRxyfkDcn01rM25+QENll1CBan5AdGXOdApnfkDcfmw702N+QOmP6wfgYH5ACnfFPTVefkCqEnRA11t+QDpBcXPKWX5AJ+E2OhNYfkDd0D74tVZ+QMruAhG3VX5AXhn95xpVfkAFL6fg5VR+QA==","dtype":"float64","shape":[104]},{"__ndarray__":"pnSdboKcbkAAAAAAAIBmPQAAAAAAgGY961QJnysgoj8NGwEFK+DBP9T0WLgv1NM/zH/y0Clg4T94ps9lQMLqP/+egLAt/PI/8kpiRD11+T9uv9VoJ2AAQD9xvR2xaARA0453sjvOCEAMbJMYx4oNQGcu0KApTBFAe9qWD3D4E0A4ZGXRNscWQIt1A999tRlAa7g4MUXAHEDF1szAjOQfQEW9Q0OqjyFA2CaYPc42I0ARfcdLMuYkQOyUNWpWnCZAX0NGlbpXKEBmXV3J3hYqQPi33gJD2CtACyguPmeaLUCbgq93y1svQFJO49V3jTBAjKVr6ylrMUB5saL6O0YyQJVcugHuHTNAX5Hk/n/xM0BQOlPwMcA0QOdBONRDiTVAn5LFqPVLNkDzFi1shwc3QGK5oBw5uzdAaGRSuEpmOECAAnQ9/Ac5QCZ+N6qNnzlA2sHO/D4sOkAUuGszUK06QFRLQEwBIjtAEmZ+RZKJO0DO8lcdQ+M7QATc/tFTLjxALgylYQRqPEDMbXzKlJU8QFfrtgpFsDxATm+GIFW5PEBOb4YgVbk8QDwhV4nWGXFAPCFXidYZcUD8KPqHRRlxQCOB9oOaF3FACQtpfeEUcUAIqG50JhFxQHQ5JGl1DHFAqKCmW9oGcUD+vhJMYQBxQMl1hToW+XBAZaYbJwXxcEApMvIROuhwQG76JfvA3nBAjeDT4qXUcEDdxRjJ9MlwQLeLEa65vnBAchPbkQCzcEBmPpJ01aZwQO3tU1ZEmnBAXQM9N1mNcEARYGoXIIBwQF/l+PakcnBAoHQF1vNkcEAt76y0GFdwQFw2DJMfSXBAiCtAcRQ7cEAHsGVPAy1wQDOlmS34HnBAYuz4C/8QcEDvZqDqIwNwQGHsWZPl6m9A/fZ2Uu/Pb0BksNESfbVvQETbo9Smm29AVDonmISCb0A8kJVdLmpvQLKfKCW8Um9AZCsa70U8b0AD9qO74yZvQEDC/4qtEm9Ay1JnXbv/bkBUahQzJe5uQI3LQAwD3m5AJjkm6WzPbkDNdf7JesJuQDZEA69Et25AEGdumOKtbkAKoXmGbKZuQNe0Xnn6oG5AJWVXcaSdbkCmdJ1ugpxuQA==","dtype":"float64","shape":[104]},{"__ndarray__":"4ofG+tC4cECmdJ1ugpxuQKZ0nW6CnG5Az0Jq7WOibkC03/1ZtbNuQPgWnBz6z25AObSInbX2bkAagwdFaydvQDtPXHueYW9AP+TKqNKkb0DBDZc1i/BvQLRLAsUlInBAZ6Yrh8tPcEDPfGmV+IBwQLe03aNutXBA9TOqZu/scEBT4PCRPCdxQKif09kXZHFAv1d08kKjcUBq7vSPf+RxQHtJd2aPJ3JAwk4dKjRsckAN5AiPL7JyQC/vW0lD+XJA91U4DTFBc0A3/r+OuolzQL/NFIKh0nNAXqpYm6cbdEDkea2OjmR0QCQiNRAYrXRA7ogR1AX1dEAOlGSOGTx1QFopUPMUgnVAoS72trnGdUCyiXiNyQl2QF4g+SoGS3ZAdNiZQzGKdkDIl3yLDMd2QChEw7ZZAXdAZMOPedo4d0BO+wOIUG13QLTRQZZ9nndAaCxrWCPMd0A88aGCA/Z3QP4FCMnfG3hAflC/33k9eECOtul6k1p4QAAeqU7ucnhAoGwfD0yGeEBCiG5wbpR4QLRWuCYXnXhAyb0e5gegeEDJvR7mB6B4QFiLlqmXCnpAWIuWqZcKekBEJDDqpgd6QM9V5jP+/nlAMDqX0tvweUCO6yASft15QB2EYT4jxXlADB43owmoeUCO03+Mb4Z5QMy+GUaTYHlA+PniG7M2eUBDn7lZDQl5QNvIe0vg13hA8ZAHPWqjeEC3ETt66Wt4QFdl9E6cMXhABKYRB8H0d0Du7XDulbV3QEJX8FBZdHdAMPxtekkxd0Dp9se2pOx2QJxh3FGppnZAelaJl5VfdkC076zTpxd2QHRHJVIez3VA7XfQXjeGdUBOm4xFMT11QMfLN1JK9HRAhyOw0MCrdEC/vNMM02N0QJ2xgFK/HHRAURyV7cPWc0AKF+8pH5JzQPm7bFMPT3NATiXstdINc0A2bUudp85yQOStaFXMkXJAhAEiKn9XckBIglVn/h9yQF5K4ViI63FA+HOjSlu6cUBCGXqItYxxQHBUQ17VYnFArj/dF/k8cUAt9SUBXxtxQByP+2VF/nBArCc8kurlcEAL2cXRjNJwQGm9dnBqxHBA9u4susG7cEDih8b60LhwQA==","dtype":"float64","shape":[104]},{"__ndarray__":"xphwi2IRf0AGL6fg5fR+QAYvp+Dl9H5AzMrj/6ryfkBmacLcGex+QL47ALZh4X5As3JayrHSfkAxP45YOcB+QBzSWJ8nqn5AX1x33auQfkDbDqdR9XN+QHcapTozVH5AHLAu15QxfkCyAAFmSQx+QB492SWA5H1AR5Z0VWi6fUAVPZAzMY59QGxi6f4JYH1AMzc99iEwfUBR7EhYqP58QKuyyWPMy3xALbt8V72XfEC4Nh9yqmJ8QDhWbvLCLHxAkEonFzb2e0CnRAcfM797QGR1y0jph3tArA0x04dQe0BqPvX8PRl7QIA41QQ74npA2CyOKa6rekBWTN2pxnV6QOLHf8SzQHpAZNAyuKQMekDAlrPDyNl5QN5LvyVPqHlApSATHWd4eUD8RWzoP0p5QMjsh8YIHnlA8UUj9vDzeEBdgvu1J8x4QPTSzUTcpnhAmmhX4T2EeEA4dFXKe2R4QLQmhT7FR3hA9LCjfEkueEDfQ27DNxh4QF0QolG/BXhAUkf8ZQ/3d0CnGTo/V+x3QEK4GBzG5XdAClRVO4vjd0AKVFU7i+N3QMq9HuYHAHhAyr0e5gcAeEACIuLGQgJ4QGaDA+rTCHhAE7HFEIwTeEAdemv8OyJ4QJ6tN260NHhAshptJ8ZKeEB0kE7pQWR4QPjdHnX4gHhAWtIgjLqgeECyPJfvWMN4QBzsxGCk6HhAr6/soG0QeUCHVlFxhTp5QLuvNZO8ZnlAZ4rcx+OUeUCftYjQy8R5QIEAfW5F9nlAIjr8YiEpekCiMUlvMF16QBW2plRDknpAlpZX1CrIekBAop6vt/56QCmovqe6NXtAbnf6fQRte0Aj35TzZaR7QGau0Mmv23tAULTwwbISfED5vzedP0l8QHqg6Bwnf3xA7iRGAjq0fEBsHJMOSeh8QBBWEgMlG31A8qAGoZ5MfUAqzLKphnx9QNSmWd6tqn1ACAA+AOXWfUDgpqLQ/AB+QHNqyhDGKH5A3Bn4gRFOfkA2hG7lr3B+QJh4cPxxkH5AHMZAiCitfkDcOyJKpMZ+QPCoVwO23H5AdNwjdS7vfkB+pclg3v1+QCnTi4eWCH9AjTStqicPf0DGmHCLYhF/QA==","dtype":"float64","shape":[104]},{"__ndarray__":"AQAAAABAf0DGmHCLYhF/QMaYcItiEX9A6FhYGlwRf0DmowsiSRF/QKOJBCsqEX9A+hm9vf8Qf0DRZK9iyhB/QAV6VaKKEH9AfmkpBUEQf0ATQ6UT7g9/QKsWQ1aSD39AJPR8VS4Pf0Bh68yZwg5/QEUMratPDn9ArGaXE9YNf0B7CgZaVg1/QJAHcwfRDH9AzG1YpEYMf0ARTTC5twt/QD61dM4kC39ANrafbI4Kf0DXXysc9Ql/QArCkWVZCX9Ap+xM0bsIf0CS79bnHAh/QKzaqTF9B39A1L0/N90Gf0DtqBKBPQZ/QNernJeeBX9AddZXAwEFf0CmOL5MZQR/QEjiSfzLA39AQuN0mjUDf0BvS7mvogJ/QLQqkcQTAn9A8JB2YYkBf0AEjuMOBAF/QNIxUlWEAH9AOYw8vQoAf0AcrRzPl/9+QFqkbBMs/35A1YGmEsj+fkBtVURVbP5+QAQvwGMZ/n5AeB6Uxs/9fkCuMzoGkP1+QIV+LKta/X5A3Q7lPTD9fkCY9N1GEf1+QJY/kU7+/H5Auf943ff8fkC5/3jd9/x+QPRmCFKVK39A9GYIUpUrf0DQpiDDmyt/QNFbbbuuK39AGHZ0ss0rf0DA5bsf+Ct/QOqayXotLH9As4UjO20sf0BAlk/Ytix/QKi808kJLX9AEek1h2Utf0CVC/yHyS1/QFYUrEM1Ln9Ac/PLMaguf0AMmeHJIS9/QED1coOhL39ALfgF1iYwf0DwkSA5sTB/QKuySCRAMX9AfEoED9Mxf0CESdlwaTJ/QN6fTcECM39Arz3nd54zf0ATEywMPDR/QCgQovXaNH9ADyXPq3o1f0DmQTmmGjZ/QMxWZly6Nn9A4lPcRVk3f0BGKSHa9jd/QBbHupCSOH9Ach0v4Ss5f0B6HARDwjl/QEq0vy1VOn9ABtXnGOQ6f0DJbgJ8bjt/QLZxlc7zO39A6M0miHM8f0CAczwg7Tx/QJ9SXA5gPX9AYFsMyss9f0DmfdLKLz5/QE6qNIiLPn9AuNC4ed4+f0BC4eQWKD9/QAzMPtdnP39ANYFMMp0/f0Dd8JOfxz9/QCILm5bmP39AJMDnjvk/f0ABAAAAAEB/QA==","dtype":"float64","shape":[104]},{"__ndarray__":"0rMC9XABe0CogI7Nd2N6QKiAjs13Y3pACRQeT0ViekBUHsO8vl56QMEX73P9WHpAhHgT0hpRekDWuKE0MEd6QPFQC/lWO3pADLnBfKgtekBXaTYdPh56QBPa2jcxDXpAcYMgKpv6eUCs3XhRleZ5QPtgVQs50XlAloUntZ+6eUCzw2Cs4qJ5QIuTck4binlAUm3O+GJweUBCyeUI01V5QJIfKtyEOnlAeegM0JEeeUAwnP9BEwJ5QO6yc48i5XhA66TaFdnHeEBc6qUyUKp4QHr7RkOhjHhAe1AvpeVueECaYdC1NlF4QAunm9KtM3hABpkCWWQWeEDEr3amc/l3QHtjaRj13HdAZCxMDALBd0C0gpDfs6V3QKTep+8ji3dAbLgDmmtxd0BCiBU8pFh3QF7GTjPnQHdA+eog3U0qd0BIbv2W8RR3QITIVb7rAHdA5HGbsFXudkCe4j/LSN12QOyStGvezXZABPtq7y/AdkAek9SzVrR2QHDTYhZsqnZANTSHdImidkCgLbMryJx2QOs3WJlBmXZATcvnGg+YdkBNy+caD5h2QHf+W0IINndAd/5bQgg2d0AVa8zAOjd3QMlgJ1PBOndAX2f7m4JAd0CbBtc9ZUh3QEjGSNtPUndALS7fFiled0AYxiiT12t3QMgVtPJBe3dADKUP2E6Md0Ct+8nl5J53QHGhcb7qsndAIx6VBEfId0CI+cJa4N53QG27iWOd9ndAlut3wWQPeEDOERwXHSl4QN+1BAetQ3hAjV/AM/teeECklt0/7np4QO3i6s1sl3hAMMx2gF20eEA02g/6ptF4QMOURN0v73hAp4OjzN4MeUCkLrtqmip5QIUdGlpJSHlAFNhOPdJleUAZ5ue2G4N5QFvPc2kMoHlApBuB94q8eUC8Up4Dfth5QGv8WTDM83lAe6BCIFwOekCzxuZ1FCh6QN321NPbQHpAwLib3JhYekAmlMkyMm96QNcQ7XiOhHpAnLaUUZSYekA8DU9fKqt6QICcqkQ3vHpANOw1pKHLekAbhH8gUNl6QAHsFVwp5XpAr6uH+RPvekDrSmOb9vZ6QH9RN+S3/HpANEeSdj4Ae0DSswL1cAF7QA==","dtype":"float64","shape":[104]},{"__ndarray__":"ZQn87fOue0DSswL1cAF7QNKzAvVwAXtAcdOsNg8Ce0BGnG5A4QN7QEAtbfnZBntARaXNSOwKe0BII7UVCxB7QDXGSEcpFntA/qytxDkde0CH9gh1LyV7QMTBfz/9LXtAny03C5Y3e0AKWVS/7EF7QO5i/EL0THtAPWpUfZ9Ye0DgjYFV4WR7QMfsqLKscXtA3aXve/R+e0AS2HqYq4x7QFGib+/EmntAiiPzZzOpe0Coeirp6bd7QJvGOlrbxntATyZJovrVe0CxuHqoOuV7QK+c9FOO9HtANvHbi+gDfEAy1VU3PBN8QJVnhz18InxASceVhZsxfEA8E6b2jEB8QFpq3XdDT3xAkutg8LFdfEDStVVHy2t8QAjo4GOCeXxAHqEnLcqGfEAEAE+KlZN8QKYjfGLXn3xA9CrUnIKrfEDaNHwgirZ8QERgmdTgwHxAIcxQoHnKfEBel8dqR9N8QOngIhs923xArseHmE3ifECbahvKa+h8QJ/oApeK7XxApmBj5pzxfECc8WGflfR8QHG6I6ln9nxAEtrN6gX3fEAS2s3qBfd8QKUvx+OIpH1ApS/H44ikfUAEEB2i6qN9QC5HW5gYon1AObZc3x+ffUAyPvyPDZt9QC/AFMPulX1APx2BkdCPfUB+NhwUwIh9QPLswGPKgH1AtCFKmfx3fUDWtZLNY259QGuKdRkNZH1AhYDNlQVZfUA6eXVbWk19QJdVSIMYQX1AsfYgJk00fUCaPdpcBSd9QGYLT0BOGX1AJUFa6TQLfUDtv9Zwxvx8QM1on+8P7nxA2hyPfh7ffEAnvYA2/898QMYqTzC/wHxAyUbVhGuxfEBB8u1MEaJ8QEMOdKG9knxA4ntCm32DfEAvHDRTXnR8QDzQI+JsZXxAHXnsYLZWfEDm92joR0h8QKQtdJEuOnxAcPvodHcsfEBZQqKrLx98QHTjek5kEnxA0L9NdiIGfECDuPU7d/p7QJ6uTbhv73tANIMwBBnle0BWF3k4gNt7QBpMAm6y0ntAjgKnvbzKe0DIG0JArMN7QNt4rg6OvXtA2PrGQW+4e0DSgmbyXLR7QNrxZzlksXtABimmL5Kve0BlCfzt8657QA==","dtype":"float64","shape":[104]}]},"selected":{"id":"1755","type":"Selection"},"selection_policy":{"id":"1754","type":"UnionRenderers"}},"id":"1697","type":"ColumnDataSource"},{"attributes":{"factors":["\u4e00\u822c\u5bb6\u5ead\nHouseholds","\u5916\u98df\u7523\u696d\nRestaurant","\u98df\u54c1\u88fd\u9020\u696d\nManufacturer","\u98df\u54c1\u5378\u58f2\u696d\nWholesaler","\u98df\u54c1\u5c0f\u58f2\u696d\nRetailer","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)"],"palette":["#1f77b4","#aec7e8","#ff7f0e","#ffbb78","#2ca02c","#98df8a","#d62728"]},"id":"1694","type":"CategoricalColorMapper"},{"attributes":{"bottom_units":"screen","fill_alpha":{"value":0.5},"fill_color":{"value":"lightgrey"},"left_units":"screen","level":"overlay","line_alpha":{"value":1.0},"line_color":{"value":"black"},"line_dash":[4,4],"line_width":{"value":2},"render_mode":"css","right_units":"screen","top_units":"screen"},"id":"1753","type":"BoxAnnotation"},{"attributes":{"callback":null,"end":1238.75,"reset_end":1238.75,"reset_start":-41.75,"start":-41.75,"tags":[[["x","x",null]]]},"id":"1656","type":"Range1d"},{"attributes":{},"id":"1726","type":"NodesAndLinkedEdges"},{"attributes":{"fill_alpha":{"value":0.6},"fill_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"line_alpha":{"value":0},"line_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"xs":{"field":"xs"},"ys":{"field":"ys"}},"id":"1725","type":"Patches"},{"attributes":{},"id":"1754","type":"UnionRenderers"},{"attributes":{"callback":null,"data":{"index":["\u4e00\u822c\u5bb6\u5ead\nHouseholds","\u5916\u98df\u7523\u696d\nRestaurant","\u98df\u54c1\u88fd\u9020\u696d\nManufacturer","\u98df\u54c1\u5378\u58f2\u696d\nWholesaler","\u98df\u54c1\u5c0f\u58f2\u696d\nRetailer","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)"],"x0":[0,0,0,0,0,985.0,985.0],"x1":[15,15,15,15,15,1000.0,1000.0],"y0":[277.5510204081638,452.93455313159745,6.394884621840902e-13,495.30612244897964,422.2167487684733,28.723955185719483,394.0019284439882],"y1":[412.2167487684733,485.30612244897964,267.5510204081638,500.0,442.93455313159745,384.0019284439882,498.7239551857194]},"selected":{"id":"1750","type":"Selection"},"selection_policy":{"id":"1749","type":"UnionRenderers"}},"id":"1695","type":"ColumnDataSource"},{"attributes":{"source":{"id":"1738","type":"ColumnDataSource"}},"id":"1743","type":"CDSView"},{"attributes":{"callback":null,"data":{"text":["\u4e00\u822c\u5bb6\u5ead\nHouseholds - 8320","\u5916\u98df\u7523\u696d\nRestaurant - 2000","\u98df\u54c1\u88fd\u9020\u696d\nManufacturer - 16530","\u98df\u54c1\u5378\u58f2\u696d\nWholesaler - 290","\u98df\u54c1\u5c0f\u58f2\u696d\nRetailer - 1280","\u4e0d\u53ef\u98df\nNon-edible - 21950","\u53ef\u98df\nEdible (Foodwaste) - 6470"],"x":{"__ndarray__":"AAAAAADAMkAAAAAAAMAyQAAAAAAAwDJAAAAAAADAMkAAAAAAAMAyQAAAAAAAXo9AAAAAAABej0A=","dtype":"float64","shape":[7]},"y":{"__ndarray__":"RIQqZCSOdUAynFHn7FF9QOuHxvrQuGBAg5dT8HIaf0ADRcXdNQl7QL4kJzidy2lAXpITnM7le0A=","dtype":"float64","shape":[7]}},"selected":{"id":"1752","type":"Selection"},"selection_policy":{"id":"1751","type":"UnionRenderers"}},"id":"1738","type":"ColumnDataSource"},{"attributes":{"fill_alpha":{"value":0.6},"fill_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"line_alpha":{"value":0},"line_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"xs":{"field":"xs"},"ys":{"field":"ys"}},"id":"1721","type":"Patches"},{"attributes":{},"id":"1751","type":"UnionRenderers"},{"attributes":{"axis_label":"y","bounds":"auto","formatter":{"id":"1693","type":"BasicTickFormatter"},"major_label_orientation":"horizontal","ticker":{"id":"1674","type":"BasicTicker"},"visible":false},"id":"1673","type":"LinearAxis"},{"attributes":{},"id":"1728","type":"EdgesAndLinkedNodes"},{"attributes":{},"id":"1752","type":"Selection"},{"attributes":{"fill_color":{"value":"#1f77b4"},"size":{"units":"screen","value":10}},"id":"1701","type":"Circle"},{"attributes":{"fill_alpha":{"value":0.6},"fill_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"line_alpha":{"value":0},"line_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"xs":{"field":"xs"},"ys":{"field":"ys"}},"id":"1722","type":"Patches"},{"attributes":{},"id":"1674","type":"BasicTicker"},{"attributes":{"text_alpha":{"value":0.1},"text_baseline":"middle","text_color":{"value":"black"},"text_font_size":{"value":"8pt"},"x":{"field":"x"},"y":{"field":"y"}},"id":"1741","type":"Text"},{"attributes":{},"id":"1755","type":"Selection"},{"attributes":{"data_source":{"id":"1738","type":"ColumnDataSource"},"glyph":{"id":"1740","type":"Text"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1741","type":"Text"},"selection_glyph":null,"view":{"id":"1743","type":"CDSView"}},"id":"1742","type":"GlyphRenderer"},{"attributes":{"dimension":1,"grid_line_color":{"value":null},"ticker":{"id":"1674","type":"BasicTicker"}},"id":"1677","type":"Grid"},{"attributes":{"bottom":{"field":"y0"},"fill_color":{"value":"#1f77b4"},"left":{"field":"x0"},"right":{"field":"x1"},"top":{"field":"y1"}},"id":"1734","type":"Quad"},{"attributes":{"data_source":{"id":"1695","type":"ColumnDataSource"},"glyph":{"id":"1732","type":"Quad"},"hover_glyph":{"id":"1735","type":"Quad"},"muted_glyph":null,"nonselection_glyph":{"id":"1733","type":"Quad"},"selection_glyph":{"id":"1734","type":"Quad"},"view":{"id":"1704","type":"CDSView"}},"id":"1736","type":"GlyphRenderer"},{"attributes":{"bottom":{"field":"y0"},"fill_color":{"value":"#1f77b4"},"left":{"field":"x0"},"line_color":{"value":"#1f77b4"},"right":{"field":"x1"},"top":{"field":"y1"}},"id":"1735","type":"Quad"},{"attributes":{},"id":"1691","type":"BasicTickFormatter"},{"attributes":{"bottom":{"field":"y0"},"fill_color":{"field":"index","transform":{"id":"1694","type":"CategoricalColorMapper"}},"left":{"field":"x0"},"right":{"field":"x1"},"top":{"field":"y1"}},"id":"1732","type":"Quad"},{"attributes":{"text_baseline":"middle","text_color":{"value":"black"},"text_font_size":{"value":"8pt"},"x":{"field":"x"},"y":{"field":"y"}},"id":"1740","type":"Text"},{"attributes":{"bottom":{"field":"y0"},"fill_alpha":{"value":0.2},"fill_color":{"field":"index","transform":{"id":"1694","type":"CategoricalColorMapper"}},"left":{"field":"x0"},"line_alpha":{"value":0.2},"line_color":{"value":"#1f77b4"},"right":{"field":"x1"},"top":{"field":"y1"}},"id":"1733","type":"Quad"},{"attributes":{"source":{"id":"1697","type":"ColumnDataSource"}},"id":"1711","type":"CDSView"},{"attributes":{"source":{"id":"1695","type":"ColumnDataSource"}},"id":"1704","type":"CDSView"},{"attributes":{"text_align":"center","text_alpha":{"value":0.1},"text_baseline":"middle","text_color":{"value":"black"},"text_font_size":{"value":"6Pt"},"x":{"field":"x"},"y":{"field":"y"}},"id":"1832","type":"Text"},{"attributes":{"text":"\u65e5\u672c\u306e\u98df\u54c1\u5ec3\u68c4\u7269\u7b49\u306e\u767a\u751f\u91cf\uff08\u5e73\u621027\u5e74\u5ea6\u63a8\u8a08\uff09 Estimated Food Disposals in Japan (FY2015)","text_color":{"value":"black"},"text_font_size":{"value":"12pt"}},"id":"1660","type":"Title"},{"attributes":{"fill_alpha":{"value":0.2},"fill_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"line_alpha":{"value":0.2},"line_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"xs":{"field":"xs"},"ys":{"field":"ys"}},"id":"1723","type":"Patches"},{"attributes":{},"id":"1664","type":"LinearScale"},{"attributes":{"source":{"id":"1828","type":"ColumnDataSource"}},"id":"1834","type":"CDSView"},{"attributes":{},"id":"1844","type":"UnionRenderers"},{"attributes":{},"id":"1693","type":"BasicTickFormatter"},{"attributes":{"factors":["\u4e00\u822c\u5bb6\u5ead\nHouseholds","\u5916\u98df\u7523\u696d\nRestaurant","\u98df\u54c1\u88fd\u9020\u696d\nManufacturer","\u98df\u54c1\u5378\u58f2\u696d\nWholesaler","\u98df\u54c1\u5c0f\u58f2\u696d\nRetailer","\u4e0d\u53ef\u98df\nNon-edible","\u53ef\u98df\nEdible (Foodwaste)"],"palette":["#1f77b4","#aec7e8","#ff7f0e","#ffbb78","#2ca02c","#98df8a","#d62728"]},"id":"1696","type":"CategoricalColorMapper"},{"attributes":{"data_source":{"id":"1828","type":"ColumnDataSource"},"glyph":{"id":"1831","type":"Text"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1832","type":"Text"},"selection_glyph":null,"view":{"id":"1834","type":"CDSView"}},"id":"1833","type":"GlyphRenderer"},{"attributes":{},"id":"1750","type":"Selection"},{"attributes":{"callback":null,"end":525.0,"reset_end":525.0,"reset_start":-24.999999999999332,"start":-24.999999999999332,"tags":[[["y","y",null]]]},"id":"1657","type":"Range1d"},{"attributes":{"callback":null,"data":{"text":["\u8fb2\u6797\u6c34\u7523\u7701\u98df\u6599\u7523\u696d\u5c40\u306e\u63a8\u8a08\u306b\u3088\u308b\nBased on estimation by Food Industry Affairs Bureau, Ministry of Agriculture, Forestry and Fisheries"],"x":[500],"y":[-15]},"selected":{"id":"1829","type":"Selection"},"selection_policy":{"id":"1844","type":"UnionRenderers"}},"id":"1828","type":"ColumnDataSource"},{"attributes":{},"id":"1682","type":"ResetTool"},{"attributes":{},"id":"1829","type":"Selection"},{"attributes":{"text_align":"center","text_baseline":"middle","text_color":{"value":"black"},"text_font_size":{"value":"6Pt"},"x":{"field":"x"},"y":{"field":"y"}},"id":"1831","type":"Text"},{"attributes":{"axis_label":"x","bounds":"auto","formatter":{"id":"1691","type":"BasicTickFormatter"},"major_label_orientation":"horizontal","ticker":{"id":"1669","type":"BasicTicker"},"visible":false},"id":"1668","type":"LinearAxis"},{"attributes":{},"id":"1680","type":"WheelZoomTool"},{"attributes":{},"id":"1678","type":"SaveTool"},{"attributes":{"fill_alpha":{"value":0.9},"fill_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"line_alpha":{"value":0.9},"line_color":{"field":"edge_color","transform":{"id":"1696","type":"CategoricalColorMapper"}},"xs":{"field":"xs"},"ys":{"field":"ys"}},"id":"1724","type":"Patches"},{"attributes":{"graph_layout":{"0":[7.5,344.88388458831855],"1":[7.5,469.12033779028854],"2":[7.5,133.77551020408222],"3":[7.5,497.6530612244898],"4":[7.5,432.57565095003537],"5":[992.5,206.36294181485385],"6":[992.5,446.3629418148538]}},"id":"1698","type":"StaticLayoutProvider"},{"attributes":{"overlay":{"id":"1753","type":"BoxAnnotation"}},"id":"1681","type":"BoxZoomTool"},{"attributes":{},"id":"1666","type":"LinearScale"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"1658","type":"HoverTool"},{"id":"1678","type":"SaveTool"},{"id":"1679","type":"PanTool"},{"id":"1680","type":"WheelZoomTool"},{"id":"1681","type":"BoxZoomTool"},{"id":"1682","type":"ResetTool"}]},"id":"1683","type":"Toolbar"},{"attributes":{"fill_color":{"field":"index","transform":{"id":"1694","type":"CategoricalColorMapper"}},"size":{"units":"screen","value":10}},"id":"1699","type":"Circle"},{"attributes":{"edge_renderer":{"id":"1710","type":"GlyphRenderer"},"inspection_policy":{"id":"1728","type":"EdgesAndLinkedNodes"},"layout_provider":{"id":"1698","type":"StaticLayoutProvider"},"node_renderer":{"id":"1703","type":"GlyphRenderer"},"selection_policy":{"id":"1726","type":"NodesAndLinkedEdges"}},"id":"1712","type":"GraphRenderer"},{"attributes":{},"id":"1669","type":"BasicTicker"},{"attributes":{"data_source":{"id":"1695","type":"ColumnDataSource"},"glyph":{"id":"1699","type":"Circle"},"hover_glyph":{"id":"1702","type":"Circle"},"muted_glyph":null,"nonselection_glyph":{"id":"1700","type":"Circle"},"selection_glyph":{"id":"1701","type":"Circle"},"view":{"id":"1704","type":"CDSView"}},"id":"1703","type":"GlyphRenderer"},{"attributes":{"callback":null,"renderers":[{"id":"1712","type":"GraphRenderer"}],"tooltips":[["From","@from"],["To","@to"],["Value [kt]","@value"]]},"id":"1658","type":"HoverTool"},{"attributes":{"grid_line_color":{"value":null},"ticker":{"id":"1669","type":"BasicTicker"}},"id":"1672","type":"Grid"},{"attributes":{},"id":"1679","type":"PanTool"},{"attributes":{"fill_color":{"value":"#1f77b4"},"line_color":{"value":"#1f77b4"},"size":{"units":"screen","value":10}},"id":"1702","type":"Circle"},{"attributes":{"fill_alpha":{"value":0.2},"fill_color":{"field":"index","transform":{"id":"1694","type":"CategoricalColorMapper"}},"line_alpha":{"value":0.2},"line_color":{"value":"#1f77b4"},"size":{"units":"screen","value":10}},"id":"1700","type":"Circle"},{"attributes":{"data_source":{"id":"1697","type":"ColumnDataSource"},"glyph":{"id":"1721","type":"Patches"},"hover_glyph":{"id":"1724","type":"Patches"},"muted_glyph":{"id":"1725","type":"Patches"},"nonselection_glyph":{"id":"1723","type":"Patches"},"selection_glyph":{"id":"1722","type":"Patches"},"view":{"id":"1711","type":"CDSView"}},"id":"1710","type":"GlyphRenderer"},{"attributes":{},"id":"1749","type":"UnionRenderers"}],"root_ids":["1659"]},"title":"Bokeh Application","version":"1.1.0"}};
+  var render_items = [{"docid":"451fbbb9-7025-4d9e-b583-cf6b807c1ca1","roots":{"1659":"7892a825-412e-46f5-b697-52c5db7d7c4d"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        embed_document(root);
+        clearInterval(timer);
+      }
+      attempts++;
+      if (attempts > 100) {
+        console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        clearInterval(timer);
+      }
+    }, 10, root)
+  }
+})(window);
+</script>
+</div>
