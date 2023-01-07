@@ -1,0 +1,18 @@
+.distill-site-nav {
+  color: rgba(255, 255, 255, 0.8);
+  background-color: #2f5597;
+  font-size: 15px;
+  font-weight: 300;
+}
+.link-noborder {
+  border: none;
+}
+.color-twitter {
+  color: #1da1f2;
+}
+.color-note {
+  color: #41C9B4;
+}
+.font-size-fa{
+  font-size: 2em;
+}

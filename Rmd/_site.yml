@@ -2,7 +2,7 @@ name: "ytknzw.github.io"
 title: "Yuta Kanzawa, Data Scientist"
 description: |
   Hello! I'm a data scientist based in Tokyo working on applied machine learning, business intelligence and data visualisation. Always under construction.
-output_dir: "../"
+output_dir: "../docs"
 base_url: https://ytknzw.github.io/
 repository_url: https://github.com/ytknzw/ytknzw.github.io
 navbar:
