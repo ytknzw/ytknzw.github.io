@@ -11,4 +11,6 @@ description: |
 
 [各国の料理とワインを楽しめるレストランのメモ<br>Memo: Restaurants to Enjoy Food and Wine of Countries](https://note.com/yutakanzawa/n/n89ddf8cae0dc)
 
-[第92回Tokyo.R初心者セッション：データ可視化<br>Beginner session of data visualisation at Tokyo.R #92 (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20210529.pdf)
+[第92回Tokyo.R 初心者セッション：データ可視化<br>Beginner session of data visualisation at Tokyo.R #92 (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20210529.pdf)
+
+[みんなのPython勉強会 #89 『わたしとデータサイエンスとあなた：いままでとこれから』<br>'Me, Data Science, and You: Past and Future' at 'Python for Everyone' (Start Python Club) #89 (Japanese)](StaPy/わたしとデータサイエンスとあなた_いままでとこれから_みんなのPython勉強会_20230119.pdf)
