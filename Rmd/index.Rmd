@@ -82,6 +82,7 @@ knitr::include_graphics(c(
 - わたしとデータサイエンスとあなた：いままでとこれから<br>Me, Data Science, and You: Past and Future (Japanese) ([みんなのPython勉強会](https://startpython.connpass.com/event/270311/), 19th January 2023)
   - [Slides](StaPy/わたしとデータサイエンスとあなた_いままでとこれから_みんなのPython勉強会_20230119.pdf)
   - [Video](https://youtu.be/dLkJura4TYc)
+  - [Q&A (rest)](https://twitter.com/info_stapy/status/1616052911259398145)
 - [データサイエンスのためのリーダブルコードのススメ<br>Readable Code for Data Science (Japanese)](PyCon/PyCon_mini_Hiroshima/データサイエンスのためのリーダブルコードのススメ_PyCon_mini_Hiroshima_20201010.pdf) (PyCon mini Hiroshima, 10th October 2020)
 - [Pythonでggplotってみた話](misc/Pythonでggplotってみた話_Pythonもくもく自習室_20200815.pdf) (Pythonもくもく自習室, 15th August 2020)
 - [Pythonで見る私の行動変容 −COVID-19前後の比較−<br>Evaluate Personal Behavioural Change with Python: Comparison before and after COVID-19 Breakout (Japanese)](PyCon/Python_Charity_Talks_in_Japan/Pythonで見る私の行動変容_−COVID-19前後の比較−_Python_Charity_Talks_in_Japan_20200704.pdf) (Python Charity Talks in Japan, 4th July 2020)
