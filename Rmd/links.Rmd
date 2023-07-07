@@ -9,6 +9,7 @@ description: |
 <a href="https://instagram.com/ytknzw" class="link-noborder"><span class="fab fa-instagram font-size-fa"></span></a>
 <a href="https://note.com/yutakanzawa" class="link-noborder"><span class="far fa-sticky-note fa-rotate-180 font-size-fa color-note"></span></a>
 
+- [スティーヴ・キスラーと2つのワイナリーの歴史<br>History of Steve Kistler & two wineries](https://note.com/yutakanzawa/n/n7079e0bc5fef)
 - みんなのPython勉強会 #89 『わたしとデータサイエンスとあなた：いままでとこれから』<br>'Me, Data Science, and You: Past and Future' at 'Python for Everyone' (Start Python Club) #89 (Japanese)
   - [スライド Slides](StaPy/わたしとデータサイエンスとあなた_いままでとこれから_みんなのPython勉強会_20230119.pdf)
   - [録画 Video](https://youtu.be/dLkJura4TYc)
