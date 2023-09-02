@@ -68,11 +68,13 @@ knitr::include_graphics(c(
 
 ## Talks
 ### R
-- [初心者セッション：R & RStudio入門<br>Beginner session: R & RStudio 101 (Japanese)](TokyoR/初心者セッション_R&RStudio入門_TokyoR_20221022.pdf) (Tokyo.R, 22nd October 2022)
-- [初心者セッション：データ可視化<br>Beginner session: Data Visualisation (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20220917.pdf) (Tokyo.R, 17th September 2022)
+- [初心者セッション：データサイエンスのためのリーダブルコードのススメ<br>BeginneR Session: Readable Code for Data Science (Japanese)](TokyoR/初心者セッション_データサイエンスのためのリーダブルコードのススメ_TokyoR_20230902.pdf) (Tokyo.R, 2nd September 2023)
+- [初心者セッション：統計学（再）入門<br>BeginneR Session: Statistics 101 (Re) (Japanese)](TokyoR/初心者セッション_統計学（再）入門_TokyoR_20230422.pdf) (Tokyo.R, 22nd April 2023)
+- [初心者セッション：R & RStudio入門<br>BeginneR Session: R & RStudio 101 (Japanese)](TokyoR/初心者セッション_R&RStudio入門_TokyoR_20221022.pdf) (Tokyo.R, 22nd October 2022)
+- [初心者セッション：データ可視化<br>BeginneR Session: Data Visualisation (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20220917.pdf) (Tokyo.R, 17th September 2022)
 - [カラーユニバーサルデザイン入門<br>Colour Universal Design 101 (Japanese)](TokyoR/カラーユニバーサルデザイン入門_TokyoR_20210123.pdf) (Tokyo.R, 23rd January 2021)
 - [日本の年平均気温図を作ってみた話](TokyoR/日本の年平均気温図を作ってみた話_JapanR_2020_20201205.pdf) (Japan.R, 5th December 2020)
-- [初心者セッション：データ可視化<br>Beginner session: Data Visualisation (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20200801.pdf) (Tokyo.R, 1st August 2020)
+- [初心者セッション：データ可視化<br>BeginneR Session: Data Visualisation (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20200801.pdf) (Tokyo.R, 1st August 2020)
 - [日本の気象観測データの（オープンなようでオープンでない）話](TokyoR/日本の気象観測データの（オープンなようでオープンでない）話_TokyoR_20200627.pdf) (Tokyo.R, 27th June 2020)
 - [国土数値情報APIのススメ](TokyoR/国土数値情報APIのススメ_TokyoR_20200404.pdf) (Tokyo.R, 4th April 2020)
 - [tidyverse（再）入門<br>(Re-)Introduction to tidyverse (Japanese)](TokyoR/Tidyverse（再）入門_JapanR_2019_20191207.pdf) (Japan.R, 7th December 2019)
