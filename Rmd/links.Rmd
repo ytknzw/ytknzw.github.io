@@ -9,6 +9,7 @@ description: |
 <a href="https://instagram.com/ytknzw" class="link-noborder"><span class="fab fa-instagram font-size-fa"></span></a>
 <a href="https://note.com/yutakanzawa" class="link-noborder"><span class="far fa-sticky-note fa-rotate-180 font-size-fa color-note"></span></a>
 
+- [Pythonデータ分析実践ハンドブック 実務で使えるデータ加工のテクニック<br>Practical Handbook of Data Analysis in Python](https://book.impress.co.jp/books/1122101021) ![](https://img.ips.co.jp/ij/22/1122101021/1122101021-520x.jpg)
 - [第108回Tokyo.R 初心者セッション：データサイエンスのためのリーダブルコードのススメ<br>BeginneR Session: Readable Code for Data Science at Tokyo.R # 108 (Japanese)](TokyoR/初心者セッション_データサイエンスのためのリーダブルコードのススメ_TokyoR_20230902.pdf)
 - [スティーヴ・キスラーと2つのワイナリーの歴史<br>History of Steve Kistler & two wineries](https://note.com/yutakanzawa/n/n7079e0bc5fef)
 - みんなのPython勉強会 #89 『わたしとデータサイエンスとあなた：いままでとこれから』<br>'Me, Data Science, and You: Past and Future' at 'Python for Everyone' (Start Python Club) #89 (Japanese)
