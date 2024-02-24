@@ -68,6 +68,7 @@ knitr::include_graphics(c(
 
 ## Talks
 ### R
+- [ggplot2のアノテーション技法<br>Art of Annotation in ggplot2 (Japanese)](TokyoR/ggplot2のアノテーション技法_TokyoR_20240224.pdf) (Tokyo.R, 24th February 2024)
 - [初心者セッション：データサイエンスのためのリーダブルコードのススメ<br>BeginneR Session: Readable Code for Data Science (Japanese)](TokyoR/初心者セッション_データサイエンスのためのリーダブルコードのススメ_TokyoR_20230902.pdf) (Tokyo.R, 2nd September 2023)
 - [初心者セッション：統計学（再）入門<br>BeginneR Session: Statistics 101 (Re) (Japanese)](TokyoR/初心者セッション_統計学（再）入門_TokyoR_20230422.pdf) (Tokyo.R, 22nd April 2023)
 - [初心者セッション：R & RStudio入門<br>BeginneR Session: R & RStudio 101 (Japanese)](TokyoR/初心者セッション_R&RStudio入門_TokyoR_20221022.pdf) (Tokyo.R, 22nd October 2022)
