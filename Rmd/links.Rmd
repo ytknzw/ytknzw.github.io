@@ -6,6 +6,7 @@ description: |
 
 <a href="https://github.com/ytknzw" class="link-noborder"><span class="fab fa-github font-size-fa"></span></a>
 <a href="https://twitter.com/yutakanzawa" class="link-noborder"><span class="fab fa-twitter font-size-fa color-twitter"></span></a>
+<a href="https://bsky.app/profile/yutakanzawa.bsky.social" class="link-noborder"><span class="fab fa-bluesky font-size-fa color-bluesky"></span></a>
 <a href="https://instagram.com/ytknzw" class="link-noborder"><span class="fab fa-instagram font-size-fa"></span></a>
 <a href="https://note.com/yutakanzawa" class="link-noborder"><span class="far fa-sticky-note fa-rotate-180 font-size-fa color-note"></span></a>
 
