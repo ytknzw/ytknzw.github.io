@@ -21,7 +21,7 @@ navbar:
       icon: fa-twitter
       href: https://twitter.com/yutakanzawa
     - text: "Bluesky"
-      icon: fa-bluesky
+      icon: fa-brands fa-bluesky
       href: https://bsky.app/profile/yutakanzawa.bsky.social
 output:
   distill::distill_article:
