@@ -68,6 +68,7 @@ knitr::include_graphics(c(
 
 ## Talks
 ### R
+- [初心者セッション：データハンドリング<br>BeginneR Session: Data Handling 101 (Japanese)](TokyoR/初心者セッション_データハンドリング_TokyoR_20260418.pdf) (Tokyo.R, 18th April 2026)
 - [初心者セッション：R & RStudio入門<br>BeginneR Session: R & RStudio 101 (Japanese)](TokyoR/初心者セッション_R&RStudio入門_TokyoR_20250621.pdf) (Tokyo.R, 21st June 2025)
 - [初心者セッション：データハンドリング<br>BeginneR Session: Data Handling 101 (Japanese)](TokyoR/初心者セッション_データハンドリング_TokyoR_20250621.pdf) (Tokyo.R, 21st June 2025)
 - [初心者セッション：データ可視化<br>BeginneR Session: Data Visualisation 101 (Japanese)](TokyoR/初心者セッション_データ可視化_TokyoR_20250621.pdf) (Tokyo.R, 21st June 2025)
